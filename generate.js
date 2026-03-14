@@ -1,0 +1,354 @@
+/**
+ * 汽车配件销售日报 — 自动生成脚本
+ * 运行: node generate.js
+ */
+
+const { spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const { marked } = require('marked');
+
+// ── 路径配置 ──────────────────────────────────────────────
+const REPORTS_DIR  = path.join(__dirname, 'reports');
+const INDEX_FILE   = path.join(__dirname, 'index.html');
+const PROMPT_FILE  = path.join(
+  process.env.USERPROFILE || process.env.HOME || '',
+  '.claude', 'commands', 'car-daily.md'
+);
+
+// ── 初始化 ────────────────────────────────────────────────
+fs.mkdirSync(REPORTS_DIR, { recursive: true });
+
+if (!fs.existsSync(PROMPT_FILE)) {
+  console.error(`❌ 找不到 Skill 文件: ${PROMPT_FILE}`);
+  process.exit(1);
+}
+
+const prompt = fs.readFileSync(PROMPT_FILE, 'utf-8');
+
+// ── 运行 Claude CLI（异步，避免 Windows stdin 死锁）────────
+console.log('🚀 正在生成日报，预计需要 3~5 分钟...\n');
+
+const childEnv = { ...process.env };
+delete childEnv.CLAUDECODE;   // 允许嵌套运行
+
+function runClaude(input) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      'claude',
+      ['--print', '--output-format', 'text', '--allowedTools', 'WebSearch,WebFetch'],
+      { env: childEnv, stdio: ['pipe', 'pipe', 'pipe'] }
+    );
+
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', d => { stdout += d; process.stdout.write('.'); });
+    child.stderr.on('data', d => { stderr += d; });
+
+    child.on('close', code => {
+      console.log('\n');
+      if (code === 0) resolve(stdout);
+      else reject(new Error(`claude 退出码 ${code}:\n${stderr}`));
+    });
+    child.on('error', err => reject(new Error(`无法启动 claude: ${err.message}`)));
+
+    // 写入 prompt 后立即关闭 stdin，避免管道阻塞
+    child.stdin.write(input, 'utf-8');
+    child.stdin.end();
+
+    // 15 分钟硬超时
+    const timer = setTimeout(() => {
+      child.kill();
+      reject(new Error('超时：claude 运行超过 15 分钟'));
+    }, 900_000);
+    child.on('close', () => clearTimeout(timer));
+  });
+}
+
+// ── 主流程（async 包裹，支持 await）──────────────────────
+(async () => {
+  let markdown;
+  try {
+    markdown = (await runClaude(prompt)).trim();
+  } catch (err) {
+    console.error('❌', err.message);
+    process.exit(1);
+  }
+  if (!markdown) {
+    console.error('❌ 生成内容为空，请检查网络连接和 API Key');
+    process.exit(1);
+  }
+
+  // ── 过滤 Claude 的过程描述性文字 ──────────────────────────
+  markdown = markdown
+    .split('\n')
+    .filter(line => {
+      const t = line.trim();
+      if (/^(全部|共|正在|已完成|搜索任务|整合数据|生成报告|数据整合|报告生成|以下是|根据以上|综合以上|基于以上|根据搜索|以下为您)/.test(t)) return false;
+      if (/个(搜索)?任务(均已|已全部|全部)/.test(t)) return false;
+      if (/(搜索完成|任务完成|数据收集完成|正在整合|生成中)/.test(t)) return false;
+      return true;
+    })
+    .join('\n')
+    .trim();
+
+  // ── 解析日期 ────────────────────────────────────────────
+  const today       = new Date();
+  const dateId      = today.toISOString().split('T')[0];
+  const dateDisplay = today.toLocaleDateString('zh-CN', {
+    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+  });
+
+  // ── Markdown → HTML ──────────────────────────────────────
+  marked.use({ gfm: true, breaks: true });
+  const bodyHtml = marked.parse(markdown);
+
+  // ── 生成报告页 ──────────────────────────────────────────
+  const reportHtml = buildReportPage(bodyHtml, dateDisplay, dateId);
+  const reportFile = path.join(REPORTS_DIR, `${dateId}.html`);
+  fs.writeFileSync(reportFile, reportHtml, 'utf-8');
+  console.log(`✅ 日报已保存: ${reportFile}`);
+
+  // ── 更新首页 ────────────────────────────────────────────
+  buildIndexPage();
+  console.log(`✅ 首页已更新: ${INDEX_FILE}`);
+  console.log(`\n🌐 请用浏览器打开: ${INDEX_FILE}`);
+})();
+
+// ═══════════════════════════════════════════════════════════
+//  生成单篇报告 HTML
+// ═══════════════════════════════════════════════════════════
+function buildReportPage(content, dateDisplay, dateId) {
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全球汽车市场动态 · ${dateDisplay}</title>
+  ${sharedStyles()}
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <span class="header-icon">🚗</span>
+        <div>
+          <h1>全球汽车市场动态</h1>
+          <p class="header-sub">跨境电商选品 · 全球市场动态 · 每日更新</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div class="date-badge">${dateDisplay}</div>
+        <a href="../index.html" class="btn-back">← 返回归档</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-wrap">
+    <article class="report-body">
+      ${content}
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <p>本报告由 Claude AI 自动生成 · 数据来源于公开信息 · 仅供参考</p>
+    <p>生成时间: ${new Date().toLocaleString('zh-CN')}</p>
+  </footer>
+
+  ${reportScript()}
+</body>
+</html>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  生成首页（归档 + 最新报告预览）
+// ═══════════════════════════════════════════════════════════
+function buildIndexPage() {
+  const reports = fs.readdirSync(REPORTS_DIR)
+    .filter(f => /^\d{4}-\d{2}-\d{2}\.html$/.test(f))
+    .sort()
+    .reverse();
+
+  const latest = reports[0] || null;
+  let latestContent = '<p class="no-report">暂无报告，请先运行生成脚本。</p>';
+  let latestDateDisplay = '尚未生成';
+
+  if (latest) {
+    const raw = fs.readFileSync(path.join(REPORTS_DIR, latest), 'utf-8');
+    const bodyMatch = raw.match(/<article class="report-body">([\s\S]*?)<\/article>/);
+    const dateMatch = raw.match(/<div class="date-badge">([^<]+)<\/div>/);
+    if (bodyMatch) latestContent = bodyMatch[1];
+    if (dateMatch) latestDateDisplay = dateMatch[1];
+  }
+
+  const archiveLinks = reports.map((f, i) => {
+    const d = f.replace('.html', '');
+    const label = i === 0 ? `${d} <span class="badge-new">最新</span>` : d;
+    return `<li class="${i === 0 ? 'active' : ''}">
+      <a href="reports/${f}">${label}</a>
+    </li>`;
+  }).join('\n');
+
+  const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全球汽车市场动态 · 归档</title>
+  ${sharedStyles()}
+  <style>
+    .index-layout { display: grid; grid-template-columns: 200px 1fr; gap: 28px; align-items: start; }
+    .sidebar { background: #fff; border-radius: 12px; box-shadow: var(--shadow); padding: 16px; position: sticky; top: 20px; }
+    .sidebar h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: #888; margin-bottom: 12px; }
+    .sidebar ul { list-style: none; margin: 0; padding: 0; }
+    .sidebar li { border-radius: 6px; margin-bottom: 4px; }
+    .sidebar li.active { background: var(--accent-bg); }
+    .sidebar li.active a { color: var(--accent); font-weight: 600; }
+    .sidebar a { display: block; padding: 7px 10px; font-size: 14px; color: #555; text-decoration: none; border-radius: 6px; }
+    .sidebar a:hover { background: #f5f7fa; color: var(--accent); }
+    .badge-new { background: #e74c3c; color: #fff; font-size: 11px; padding: 1px 5px; border-radius: 10px; margin-left: 4px; vertical-align: middle; }
+    .no-report { color: #888; text-align: center; padding: 40px; }
+    @media (max-width: 700px) { .index-layout { grid-template-columns: 1fr; } .sidebar { position: static; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <span class="header-icon">🚗</span>
+        <div>
+          <h1>全球汽车市场动态</h1>
+          <p class="header-sub">跨境电商选品 · 全球市场动态 · 每日更新</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div class="date-badge">最新: ${latestDateDisplay}</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-wrap">
+    <div class="index-layout">
+      <aside class="sidebar">
+        <h3>📂 历史归档</h3>
+        <ul>${archiveLinks || '<li><a href="#">暂无记录</a></li>'}</ul>
+      </aside>
+
+      <article class="report-body">
+        ${latestContent}
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>本报告由 Claude AI 自动生成 · 数据来源于公开信息 · 仅供参考</p>
+    <p>共 ${reports.length} 份报告 · 最后更新: ${new Date().toLocaleString('zh-CN')}</p>
+  </footer>
+
+  ${reportScript()}
+</body>
+</html>`;
+
+  fs.writeFileSync(INDEX_FILE, html, 'utf-8');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  共享 CSS
+// ═══════════════════════════════════════════════════════════
+function sharedStyles() {
+  return `<style>
+    :root {
+      --accent: #2563eb;
+      --accent-bg: #eff6ff;
+      --header-from: #0f172a;
+      --header-to: #1e3a5f;
+      --shadow: 0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+      --radius: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+           background: #f1f5f9; color: #1e293b; line-height: 1.7; font-size: 15px; }
+
+    /* Header */
+    .site-header { background: linear-gradient(135deg, var(--header-from), var(--header-to));
+                   color: #fff; padding: 20px 0; }
+    .header-inner { max-width: 1600px; margin: 0 auto; padding: 0 32px;
+                    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .header-brand { display: flex; align-items: center; gap: 14px; }
+    .header-icon { font-size: 36px; }
+    .header-brand h1 { margin: 0; font-size: 22px; font-weight: 700; }
+    .header-sub { margin: 2px 0 0; font-size: 13px; opacity: .75; }
+    .header-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .date-badge { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+                  padding: 5px 14px; border-radius: 20px; font-size: 13px; }
+    .btn-back { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+                color: #fff; text-decoration: none; padding: 5px 14px; border-radius: 20px;
+                font-size: 13px; transition: background .2s; }
+    .btn-back:hover { background: rgba(255,255,255,.25); }
+
+    /* Layout */
+    .main-wrap { max-width: 1600px; margin: 28px auto; padding: 0 32px 40px; }
+
+    /* Report body */
+    .report-body { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 36px 40px; }
+    .report-body h1 { font-size: 22px; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; }
+    .report-body h2 { font-size: 18px; color: #1e3a5f; margin-top: 36px; padding: 8px 14px;
+                      background: #f8fafc; border-left: 4px solid var(--accent); border-radius: 0 6px 6px 0; }
+    .report-body h3 { font-size: 15px; color: #334155; margin-top: 24px; }
+    .report-body h4 { font-size: 14px; color: #475569; margin-top: 18px; }
+    .report-body p { margin: 10px 0; }
+    .report-body a { color: var(--accent); }
+    .report-body strong { color: #0f172a; }
+    .report-body hr { border: none; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+    .report-body blockquote { margin: 12px 0; padding: 10px 16px; background: #f8fafc;
+                               border-left: 3px solid #cbd5e1; border-radius: 0 6px 6px 0; color: #475569; }
+
+    /* Tables */
+    .report-body table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+    .report-body th { background: #1e3a5f; color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+    .report-body td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    .report-body tr:hover td { background: #f8fafc; }
+    .report-body tr:nth-child(even) td { background: #fafafa; }
+    .report-body tr:nth-child(even):hover td { background: #f1f5f9; }
+
+    /* Lists */
+    .report-body ul, .report-body ol { padding-left: 22px; }
+    .report-body li { margin: 5px 0; }
+
+    /* Code */
+    .report-body code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 20px; font-size: 12px; color: #94a3b8; }
+
+    /* Star ratings → colored */
+    .report-body td:last-child, .report-body td { white-space: pre-line; }
+    @media (max-width: 700px) {
+      .report-body { padding: 20px 16px; }
+      .report-body table { font-size: 12px; }
+      .report-body th, .report-body td { padding: 7px 9px; }
+      .header-brand h1 { font-size: 17px; }
+    }
+    @media print {
+      .site-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .btn-back, .sidebar { display: none; }
+    }
+  </style>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  共享 JS（高亮星级评分）
+// ═══════════════════════════════════════════════════════════
+function reportScript() {
+  return `<script>
+    // 自动为表格单元格中的星级评分上色
+    document.querySelectorAll('td').forEach(td => {
+      if (td.textContent.includes('⭐⭐⭐')) td.style.color = '#16a34a';
+      else if (td.textContent.includes('⭐⭐')) td.style.color = '#ca8a04';
+      // 正负面标记
+      if (td.textContent.startsWith('✅')) td.style.background = '#f0fdf4';
+      if (td.textContent.startsWith('❌')) td.style.background = '#fef2f2';
+      if (td.textContent.startsWith('➖')) td.style.background = '#fafafa';
+    });
+  </script>`;
+}

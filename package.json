@@ -1,0 +1,13 @@
+{
+  "name": "car-daily-report",
+  "version": "1.0.0",
+  "description": "汽车配件销售日报自动生成",
+  "main": "generate.js",
+  "scripts": {
+    "generate": "node generate.js",
+    "start": "node generate.js"
+  },
+  "dependencies": {
+    "marked": "^12.0.0"
+  }
+}

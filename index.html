@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全球汽车市场动态 · 归档</title>
+  <style>
+    :root {
+      --accent: #2563eb;
+      --accent-bg: #eff6ff;
+      --header-from: #0f172a;
+      --header-to: #1e3a5f;
+      --shadow: 0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+      --radius: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+           background: #f1f5f9; color: #1e293b; line-height: 1.7; font-size: 15px; }
+
+    /* Header */
+    .site-header { background: linear-gradient(135deg, var(--header-from), var(--header-to));
+                   color: #fff; padding: 20px 0; }
+    .header-inner { max-width: 1600px; margin: 0 auto; padding: 0 32px;
+                    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .header-brand { display: flex; align-items: center; gap: 14px; }
+    .header-icon { font-size: 36px; }
+    .header-brand h1 { margin: 0; font-size: 22px; font-weight: 700; }
+    .header-sub { margin: 2px 0 0; font-size: 13px; opacity: .75; }
+    .header-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .date-badge { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+                  padding: 5px 14px; border-radius: 20px; font-size: 13px; }
+    .btn-back { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+                color: #fff; text-decoration: none; padding: 5px 14px; border-radius: 20px;
+                font-size: 13px; transition: background .2s; }
+    .btn-back:hover { background: rgba(255,255,255,.25); }
+
+    /* Layout */
+    .main-wrap { max-width: 1600px; margin: 28px auto; padding: 0 32px 40px; }
+
+    /* Report body */
+    .report-body { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 36px 40px; }
+    .report-body h1 { font-size: 22px; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; }
+    .report-body h2 { font-size: 18px; color: #1e3a5f; margin-top: 36px; padding: 8px 14px;
+                      background: #f8fafc; border-left: 4px solid var(--accent); border-radius: 0 6px 6px 0; }
+    .report-body h3 { font-size: 15px; color: #334155; margin-top: 24px; }
+    .report-body h4 { font-size: 14px; color: #475569; margin-top: 18px; }
+    .report-body p { margin: 10px 0; }
+    .report-body a { color: var(--accent); }
+    .report-body strong { color: #0f172a; }
+    .report-body hr { border: none; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+    .report-body blockquote { margin: 12px 0; padding: 10px 16px; background: #f8fafc;
+                               border-left: 3px solid #cbd5e1; border-radius: 0 6px 6px 0; color: #475569; }
+
+    /* Tables */
+    .report-body table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+    .report-body th { background: #1e3a5f; color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+    .report-body td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    .report-body tr:hover td { background: #f8fafc; }
+    .report-body tr:nth-child(even) td { background: #fafafa; }
+    .report-body tr:nth-child(even):hover td { background: #f1f5f9; }
+
+    /* Lists */
+    .report-body ul, .report-body ol { padding-left: 22px; }
+    .report-body li { margin: 5px 0; }
+
+    /* Code */
+    .report-body code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 20px; font-size: 12px; color: #94a3b8; }
+
+    /* Star ratings → colored */
+    .report-body td:last-child, .report-body td { white-space: pre-line; }
+    @media (max-width: 700px) {
+      .report-body { padding: 20px 16px; }
+      .report-body table { font-size: 12px; }
+      .report-body th, .report-body td { padding: 7px 9px; }
+      .header-brand h1 { font-size: 17px; }
+    }
+    @media print {
+      .site-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .btn-back, .sidebar { display: none; }
+    }
+  </style>
+  <style>
+    .index-layout { display: grid; grid-template-columns: 200px 1fr; gap: 28px; align-items: start; }
+    .sidebar { background: #fff; border-radius: 12px; box-shadow: var(--shadow); padding: 16px; position: sticky; top: 20px; }
+    .sidebar h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: #888; margin-bottom: 12px; }
+    .sidebar ul { list-style: none; margin: 0; padding: 0; }
+    .sidebar li { border-radius: 6px; margin-bottom: 4px; }
+    .sidebar li.active { background: var(--accent-bg); }
+    .sidebar li.active a { color: var(--accent); font-weight: 600; }
+    .sidebar a { display: block; padding: 7px 10px; font-size: 14px; color: #555; text-decoration: none; border-radius: 6px; }
+    .sidebar a:hover { background: #f5f7fa; color: var(--accent); }
+    .badge-new { background: #e74c3c; color: #fff; font-size: 11px; padding: 1px 5px; border-radius: 10px; margin-left: 4px; vertical-align: middle; }
+    .no-report { color: #888; text-align: center; padding: 40px; }
+    @media (max-width: 700px) { .index-layout { grid-template-columns: 1fr; } .sidebar { position: static; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <span class="header-icon">🚗</span>
+        <div>
+          <h1>全球汽车市场动态</h1>
+          <p class="header-sub">跨境电商选品 · 全球市场动态 · 每日更新</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div class="date-badge">最新: 2026年3月14日星期六</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-wrap">
+    <div class="index-layout">
+      <aside class="sidebar">
+        <h3>📂 历史归档</h3>
+        <ul><li class="active">
+      <a href="reports/2026-03-14.html">2026-03-14 <span class="badge-new">最新</span></a>
+    </li></ul>
+      </aside>
+
+      <article class="report-body">
+        
+      <p>数据收集完毕，正在生成报告...</p>
+<hr>
+<h3>📅 汽车配件销售参考日报 · 2026-03-14</h3>
+<hr>
+<h4>一、Tesla &amp; 新能源车动态</h4>
+<table>
+<thead>
+<tr>
+<th>品牌/车型</th>
+<th>动态摘要</th>
+<th>目标市场</th>
+<th>起售价</th>
+<th>配件机会</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tesla Model Y Juniper</td>
+<td>2026款全面重塑 trim 命名与定价；OTA 2026.8 推送 Comfort Braking 新功能（仅限 Premium 及以上）；7座版本恢复销售</td>
+<td>美国/全球</td>
+<td>$39,990</td>
+<td>⭐⭐⭐ 2026款为全新造型代际，已有多款 TPE 全套脚垫在 Amazon 快速起量，选品窗口最佳</td>
+</tr>
+<tr>
+<td>Tesla Model 3 2026</td>
+<td>入门款降至 $36,990；Performance 版将升级 16&quot; QHD 显示屏 + Alcantara 内饰，与 Model Y 同步</td>
+<td>美国/全球</td>
+<td>$36,990</td>
+<td>⭐⭐⭐ 入门价下探激活新增用户，老款车主升级购车带动配件需求</td>
+</tr>
+<tr>
+<td>Tesla Cybertruck Dual-Motor</td>
+<td>3月4日新增双电机 AWD 版本，$59,990 起、325 mi 续航，价格大幅下探</td>
+<td>美国</td>
+<td>$59,990</td>
+<td>⭐⭐ 价格更亲民后潜在车主池扩大，皮卡专属脚垫+货厢衬垫机会渐显</td>
+</tr>
+<tr>
+<td>Toyota RAV4 PHEV（新款）</td>
+<td>3月9日正式在日本上市，纯电续航增58%（达 62 miles），今春进入美国/欧洲市场</td>
+<td>日本/美国/欧洲</td>
+<td>~¥4,598,000（日本）/ 美国定价 TBA</td>
+<td>⭐⭐⭐ RAV4 全球销量王，新款发布换代节点，全套 3D 脚垫需求将快速爬升</td>
+</tr>
+<tr>
+<td>BYD Sealion 5 DM-i</td>
+<td>英国市场发布，1.5L+电机双动力，配两档电池选项</td>
+<td>英国/欧洲</td>
+<td>£29,995</td>
+<td>⭐⭐ 英国市场新车型，初期保有量有限，可跟踪备少量定制款</td>
+</tr>
+<tr>
+<td>Acura RSX</td>
+<td>双电机紧凑 SUV Coupe，H1 2026 上市</td>
+<td>美国</td>
+<td>~$45,000 TBA</td>
+<td>⭐ 新品牌入市，保有量需观察</td>
+</tr>
+<tr>
+<td>Hyundai Staria EV</td>
+<td>早 2026 上市，销售覆盖欧洲/泰国/澳大利亚</td>
+<td>欧洲/澳新</td>
+<td>TBA</td>
+<td>⭐⭐ MPV 体量大，脚垫/门槛条单价较高，值得跟进开模</td>
+</tr>
+</tbody></table>
+<p><a href="https://www.basenor.com/blogs/news/tesla-2026-model-3-model-y-lineup-revamped-full-pricing-what-to-do">来源：basenor.com Tesla 2026 定价分析</a> | <a href="https://electrek.co/2026/02/19/new-toyota-rav4-phev-has-58-more-electric-range/">来源：electrek.co Toyota RAV4 PHEV</a> | <a href="https://global.toyota/en/newsroom/toyota/43984473.html">来源：Toyota Global Newsroom</a> | <a href="https://www.basenor.com/blogs/news/tesla-launches-59-990-dual-motor-cybertruck-new-pricing-specs">来源：teslarati.com Cybertruck Dual-Motor</a></p>
+<hr>
+<h4>二、燃油/混动新车上市</h4>
+<table>
+<thead>
+<tr>
+<th>车型</th>
+<th>发布市场</th>
+<th>时间</th>
+<th>配件机会</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Mercedes VLE（EQV 替代款 8座 MPV）</td>
+<td>欧洲（全球首发 3月10日）/ 美国年末</td>
+<td>2026 Q1/Q4</td>
+<td>⭐⭐ 豪华 MPV 高客单价，欧洲提前布局</td>
+</tr>
+<tr>
+<td>Rivian R2（紧凑 SUV EV）</td>
+<td>美国</td>
+<td>2026 交付开始</td>
+<td>⭐⭐ ~$45,000 起、走量 SUV，TPE 脚垫需求明确</td>
+</tr>
+<tr>
+<td>Slate Truck（超低价皮卡 EV）</td>
+<td>美国（印第安纳州生产）</td>
+<td>2026 Q4</td>
+<td>⭐ 定价&lt;$30,000 下沉市场，配件价格敏感</td>
+</tr>
+<tr>
+<td>Ram 1500 REV（EREV 皮卡）</td>
+<td>美国</td>
+<td>2026</td>
+<td>⭐⭐ 皮卡货厢衬垫+脚垫套装机会</td>
+</tr>
+<tr>
+<td>Toyota Tundra（美产出口日本）</td>
+<td>日本</td>
+<td>2026</td>
+<td>⭐ 小众但单价高，可做少量适配测试</td>
+</tr>
+<tr>
+<td>Hyundai 中型皮卡（开发中）</td>
+<td>美国/全球</td>
+<td>2026~2027 TBA</td>
+<td>⭐ 概念阶段，持续关注</td>
+</tr>
+</tbody></table>
+<p><a href="https://www.newsweek.com/worlds-most-anticipated-new-vehicles-2026-evs-trends-11221899">来源：Newsweek 2026 最受期待新车</a> | <a href="https://electrek.co/2026/02/25/hyundai-new-pickup-potential-4wd-suv-in-the-works/">来源：electrek.co Hyundai 皮卡</a> | <a href="https://pressroom.toyota.com/toyota-aims-to-begin-selling-u-s-vehicles-in-japan-from-2026/">来源：Toyota 美产车出口日本</a></p>
+<hr>
+<h4>三、各市场销量快速上升车型</h4>
+<p><strong>🇺🇸 美国市场</strong></p>
+<table>
+<thead>
+<tr>
+<th>车型</th>
+<th>增长幅度</th>
+<th>配件适配建议</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Toyota RAV4</td>
+<td>高速走量，市场库存天数仅 36 天</td>
+<td>优先上架 2026款 TPE 全包围脚垫套装</td>
+</tr>
+<tr>
+<td>Toyota Prius</td>
+<td>库存天数 26 天，需求旺盛</td>
+<td>适配新款 Prius 脚垫，主打环保 TPE 材质</td>
+</tr>
+<tr>
+<td>Hyundai 全系混动</td>
+<td>2月混动销量 +79% YoY</td>
+<td>跟进 Tucson/Sonata/Santa Fe PHEV 适配</td>
+</tr>
+<tr>
+<td>Kia 全系混动</td>
+<td>混动 +53% YoY，品牌 +4.3%</td>
+<td>EV6/Niro PHEV 脚垫选品机会</td>
+</tr>
+<tr>
+<td>Toyota 皮卡（Tacoma/Tundra）</td>
+<td>2月 +22% YoY</td>
+<td>皮卡货厢橡胶衬垫+全天候脚垫</td>
+</tr>
+</tbody></table>
+<p><strong>🌍 中东市场（沙特/UAE）</strong></p>
+<table>
+<thead>
+<tr>
+<th>车型</th>
+<th>增长幅度</th>
+<th>配件适配建议</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Geely 全系（含银河/极氪）</td>
+<td>H1 2026 中东市场中国品牌销量前三</td>
+<td>吉利旗下车型适配脚垫，中东市场尘砂防护需求强</td>
+</tr>
+<tr>
+<td>Toyota RAV4 / Hilux</td>
+<td>长期区域热销</td>
+<td>加厚橡胶地垫+cargo liner，抗沙尘版</td>
+</tr>
+</tbody></table>
+<p><strong>🇲🇽 墨西哥市场</strong></p>
+<table>
+<thead>
+<tr>
+<th>车型</th>
+<th>增长幅度</th>
+<th>配件适配建议</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>中国品牌 BEV</td>
+<td>2025年销量 53,742辆（2023年仅 3,145辆），+1,608%</td>
+<td>针对 BYD Atto 3/Seagull 等主销车型开发脚垫</td>
+</tr>
+<tr>
+<td>Nissan Frontier（皮卡）</td>
+<td>墨西哥长期热销</td>
+<td>皮卡内饰配件本地化适配</td>
+</tr>
+</tbody></table>
+<p><strong>🇯🇵 日本市场</strong></p>
+<table>
+<thead>
+<tr>
+<th>车型</th>
+<th>增长幅度</th>
+<th>配件适配建议</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Toyota RAV4 PHEV（新款）</td>
+<td>3月9日上市，换代节点</td>
+<td>日本专用尺寸 TPE 脚垫，需精细开模</td>
+</tr>
+<tr>
+<td>Toyota Prius PHV</td>
+<td>长期稳居日本 PHEV 销量前列</td>
+<td>维持库存，持续销售</td>
+</tr>
+</tbody></table>
+<p><strong>🇦🇺 澳大利亚/新西兰市场</strong></p>
+<table>
+<thead>
+<tr>
+<th>车型</th>
+<th>增长幅度</th>
+<th>配件适配建议</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>中国品牌 BEV（BYD/MG等）</td>
+<td>澳大利亚 2025 BEV 中国品牌占 79.5%；新西兰 70.5%</td>
+<td>BYD Atto3/Seal/Dolphin、MG4 脚垫选品</td>
+</tr>
+<tr>
+<td>Hyundai Staria EV</td>
+<td>早 2026 上市，针对澳新市场</td>
+<td>8座 MPV 全套脚垫，单价可高定</td>
+</tr>
+</tbody></table>
+<p><a href="https://caredge.com/guides/fastest-and-slowest-selling-cars-2026">来源：caredge.com 最快/慢销车型</a> | <a href="https://www.carpro.com/blog/february-2026-u.s.-auto-sales-results">来源：carpro.com 2月美国销量</a> | <a href="https://www.alibaba.com/product-insights/2026-best-selling-cars-global-top-10-models-market-trends-revealed.html">来源：alibaba.com 全球销量趋势</a></p>
+<hr>
+<h4>四、政策法规动态</h4>
+<p><strong>🇺🇸 美国</strong></p>
+<ul>
+<li><strong>超高关税壁垒持续</strong>：中国制造整车面临 100%（Section 301）+ 25%（Section 232）双重关税，共125%；中国 ICE 整车 50% 关税。对跨境配件卖家而言，在美本地备货/FBA 仓储的竞争优势进一步强化。→ ✅ 中国配件出口美国（脚垫类）受关税影响相对小，可强调&quot;从中国工厂直发 FBA&quot;的价格优势</li>
+<li><strong>3月11日 USTR 新 301 调查启动</strong>：涉及中国、欧盟、墨西哥等制造业产能问题，汽车零部件在调查范围内，后续关税可能上调。→ ❌ 需关注后续进展，提前准备价格调整预案</li>
+<li><strong>OBBBA 美产 EV 贷款利息抵扣</strong>：取代 IRA 一次性退税，改为每年最高 $10,000 贷款利息抵扣（仅限美国制造 EV）。→ ✅ 鼓励美产 EV 销售，Tesla/Rivian 等保有量将增长，配件需求同步上升</li>
+<li><strong>NHTSA 自动驾驶公开会议 3月10日</strong>：AV 安全法规方向明朗化，对智能配件/行车记录仪产品有指导意义。→ ➖ 中性，长期方向利好智能车载配件</li>
+</ul>
+<p><strong>🇩🇪 德国/欧洲</strong></p>
+<ul>
+<li><strong>德国 2026 EV 补贴计划</strong>：1月1日起回溯生效，€30亿预算，支持约 80 万辆，年收入 ≤€8 万可申请，申请入口预计 5 月上线。→ ✅ 德国 EV 保有量将加速增长，脚垫/内饰配件独立站/亚马逊欧洲站机会</li>
+<li><strong>英国零排放车资本免税至 3月31日截止</strong>：企业购 EV 的税务优惠即将结束，可能在当季触发一波企业采购高峰。→ ✅ 短期刺激英国 EV 销量，冲刺备货</li>
+<li><strong>EU 新电池法/圆形经济法</strong>：要求 EV 电池及零部件含欧洲产地成分，长期影响供应链结构。→ ❌ 对中国代工配件有一定门槛压力，需关注</li>
+</ul>
+<p><strong>🇯🇵 日本</strong></p>
+<ul>
+<li><strong>EV 购车补贴上调至 JPY 130万</strong>（原 JPY 90万，+44%），FCV 补贴下调。→ ✅ 日本 EV 消费者购买成本降低，配件市场扩大</li>
+<li><strong>绿色税收优惠制度 3月31日到期</strong>：Green Tax 体系将于本月底废止，消费者或提前购车。→ ✅ 本季末日本 EV 销量脉冲，备货日本适配款</li>
+</ul>
+<p><strong>🇦🇺 澳大利亚</strong></p>
+<ul>
+<li><strong>GST 免税政策评估进行中</strong>：若通过，EV 将节省约 $4,500（10% GST 免除），对标北欧刺激效果。→ ✅ 通过概率较高，提前布局澳新 EV 适配配件</li>
+</ul>
+<p><strong>🇲🇽 墨西哥</strong></p>
+<ul>
+<li><strong>USMCA 汽车零部件暂保关税豁免</strong>：目前 USMCA 合规零件仍免税，但美国已启动非美国产地内容关税评估机制。→ ➖ 短期稳定，长期存在变数，需关注墨西哥进口通道</li>
+</ul>
+<p><a href="https://taxfoundation.org/research/all/federal/trump-tariffs-trade-war/">来源：taxfoundation.org 关税追踪器</a> | <a href="https://www.whitehouse.gov/fact-sheets/2025/03/fact-sheet-president-donald-j-trump-adjusts-imports-of-automobiles-and-automobile-parts-into-the-united-states/">来源：whitehouse.gov 汽车关税事实页</a> | <a href="https://alternative-fuels-observatory.ec.europa.eu/general-information/news/germanys-2026-ev-incentive-programme-supporting-socially-targeted-ev">来源：alternative-fuels-observatory.ec.europa.eu 德国补贴</a> | <a href="https://www.globalautoinsight.com/read_news.php?id=238">来源：globalautoinsight.com 日本补贴修订</a> | <a href="https://www.transportation.gov/regulations/federal-register-documents/2026-02503">来源：transportation.gov NHTSA AV 会议</a></p>
+<hr>
+<h4>五、配件市场信号</h4>
+<p><strong>Amazon 畅销榜变化 &amp; 热门适配车型</strong></p>
+<ul>
+<li><strong>Tesla Model Y Juniper 2025-2026</strong> 专属 TPE 脚垫为当前 Amazon 汽车配件增速最快品类，多品牌（OEDRO、LOZUZ、SUPER LINER）正在抢占 BSR 位置；全套 9-10 件套（前后排+行李厢+座椅背板保护）成为主流 SKU 形式</li>
+<li><strong>Tesla Model X 2022-2026</strong>（7座版）TPE 地垫需求有新增（YHTAUTO 等新品上架）</li>
+<li><strong>Toyota RAV4</strong>、<strong>Prius</strong>、<strong>Tacoma</strong> 在&quot;fastest selling cars&quot;榜单持续靠前，关联脚垫关键词搜索量高</li>
+<li>3D MAXpider Kagu 系列在 Tesla 社群口碑极强，保持&quot;Tesla 车主票选 #1 脚垫&quot;标签，对标竞争明确</li>
+</ul>
+<p><strong>新兴产品趋势</strong></p>
+<table>
+<thead>
+<tr>
+<th>趋势</th>
+<th>详情</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>材质主流：TPE 全面取代 PVC/橡胶</td>
+<td>低密度 TPE 更柔韧、抗寒冷、无刺激气味，成为新品标配；&quot;odorless / eco-friendly / BPA-free&quot; 成为 listing 关键卖点</td>
+</tr>
+<tr>
+<td>多层复合结构</td>
+<td>TPE 面层 + XPE 泡棉中层（降噪缓冲）+ 防滑底层，3D MAXpider 为代表，直接影响购买决策</td>
+</tr>
+<tr>
+<td>超大件套装化</td>
+<td>从3件（前排+后排+尾箱）升级为 9-10 件（含座椅背板、中控台垫），客单价提升40-60%</td>
+</tr>
+<tr>
+<td>精准车型适配</td>
+<td>仅凭&quot;Universal&quot;已难以高转化，2025-2026 年份精确适配 listing 点击率远超通用款</td>
+</tr>
+<tr>
+<td>定制化套装</td>
+<td>脚垫+行李厢衬垫+方向盘套组合套装在独立站开始测试</td>
+</tr>
+</tbody></table>
+<p><strong>竞品动态</strong></p>
+<ul>
+<li><strong>WeatherTech</strong>：定位高端，激光测量 TPE，美国本土品牌溢价显著，Amazon 售价 $150-$250+，中国卖家难以直接竞争，但可凭性价比（$50-$100区间）抢占中间价格带</li>
+<li><strong>3D MAXpider</strong>：以三层结构+精准适配快速侵蚀 WeatherTech 份额，Tesla 社群中市占率上升最快</li>
+<li><strong>TuxMat</strong>：加拿大品牌，以全覆盖设计（边缘延伸至车门槛）为差异化，在北美论坛口碑上升</li>
+<li><strong>中国卖家 OEDRO / LOZUZ / GSYLCMKP</strong>：通过快速适配新车型（Model Y Juniper 发布后2周内即上架）抢 BSR，打价格战；核心策略：速度快+全套件+主图精美</li>
+</ul>
+<p><a href="https://www.amazon.com/Best-Sellers-Automotive-Floor-Mats-Cargo-Liners/zgbs/automotive/15735731">来源：Amazon BSR - 汽车地垫品类</a> | <a href="https://www.lasfit.com/blogs/news/best-5-all-weather-floor-mats-brands-for-your-vehicle">来源：lasfit.com 2026最佳品牌</a> | <a href="https://www.amazon.com/Juniper-Seatback-Protector-Accessories-Backrest/dp/B0GFVS7SWT">来源：Amazon OEDRO Model Y Juniper</a></p>
+<hr>
+<h4>六、本周行动建议</h4>
+<ol>
+<li><p><strong>【美国/Tesla Model Y Juniper 2026】</strong> 立即上架或优化 2025-2026 Juniper 专属 9件套 TPE 脚垫 listing，突出&quot;Comfort Braking 兼容/7座适配&quot;，抢在 BSR 前10位站稳脚跟，主图加&quot;2026 Juniper Fit&quot;角标</p>
+</li>
+<li><p><strong>【美国/Toyota RAV4 PHEV 新款】</strong> 新款 RAV4 PHEV 今春进入美国，提前 6-8 周开模备货 2026款精准适配脚垫，卡住新车交付后第一波购买需求，优先布局 FBA 美东/西海岸仓</p>
+</li>
+<li><p><strong>【德国/欧洲站】</strong> 德国 €30亿 EV 补贴门户预计 5 月上线，届时 EV 交付量将加速，提前将德国市场主销 EV 车型（BYD Sealion 5 DM-i、VW ID.4、Tesla Model Y）脚垫备货入 Amazon DE/FBA，赶在补贴订单高峰前到仓</p>
+</li>
+<li><p><strong>【日本市场/Toyota RAV4 PHEV 新款】</strong> 日本 EV/PHEV 补贴上调 + RAV4 PHEV 新款同期上市，是切入日本 Amazon 脚垫品类的最佳时间窗口；需注意日本车型与欧美尺寸差异，严格按日规版尺寸开模</p>
+</li>
+<li><p><strong>【澳大利亚/BYD 主销车型】</strong> 澳大利亚中国品牌 BEV 市占率79.5%，BYD Atto 3 / Seal / Dolphin 为主销车型，目前亚马逊澳站该品类竞争相对薄弱，建议优先以 BYD Atto 3 精准适配 TPE 全套脚垫切入，主打&quot;Made for Aussie Conditions&quot;本地化卖点</p>
+</li>
+</ol>
+<hr>
+<p><strong>数据来源汇总</strong>：<a href="https://www.basenor.com/blogs/news/tesla-2026-model-3-model-y-lineup-revamped-full-pricing-what-to-do">Tesla 2026 定价</a> | <a href="https://www.basenor.com/blogs/news/tesla-launches-59-990-dual-motor-cybertruck-new-pricing-specs">Cybertruck Dual-Motor</a> | <a href="https://global.toyota/en/newsroom/toyota/43984473.html">Toyota RAV4 PHEV 日本发布</a> | <a href="https://insideevs.com/features/783999/every-new-electric-car-ev-2026/">InsideEVs 2026 EV列表</a> | <a href="https://caredge.com/guides/fastest-and-slowest-selling-cars-2026">CarEdge 销售速度排行</a> | <a href="https://www.carpro.com/blog/february-2026-u.s.-auto-sales-results">2月美国销量</a> | <a href="https://taxfoundation.org/research/all/federal/trump-tariffs-trade-war/">关税追踪器</a> | <a href="https://alternative-fuels-observatory.ec.europa.eu/general-information/news/germanys-2026-ev-incentive-programme-supporting-socially-targeted-ev">德国EV补贴</a> | <a href="https://www.globalautoinsight.com/read_news.php?id=238">日本EV补贴</a> | <a href="https://www.amazon.com/Best-Sellers-Automotive-Floor-Mats-Cargo-Liners/zgbs/automotive/15735731">Amazon BSR脚垫</a> | <a href="https://www.lasfit.com/blogs/news/best-5-all-weather-floor-mats-brands-for-your-vehicle">Lasfit品牌排行</a></p>
+<blockquote>
+<p><strong>免责提示</strong>：本报告基于公开信息整合，部分数据来自第三方媒体及行业分析，仅供参考，请结合实际市场情况及平台数据进行独立决策。</p>
+</blockquote>
+
+    
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>本报告由 Claude AI 自动生成 · 数据来源于公开信息 · 仅供参考</p>
+    <p>共 1 份报告 · 最后更新: 2026/3/14 21:00:30</p>
+  </footer>
+
+  <script>
+    // 自动为表格单元格中的星级评分上色
+    document.querySelectorAll('td').forEach(td => {
+      if (td.textContent.includes('⭐⭐⭐')) td.style.color = '#16a34a';
+      else if (td.textContent.includes('⭐⭐')) td.style.color = '#ca8a04';
+      // 正负面标记
+      if (td.textContent.startsWith('✅')) td.style.background = '#f0fdf4';
+      if (td.textContent.startsWith('❌')) td.style.background = '#fef2f2';
+      if (td.textContent.startsWith('➖')) td.style.background = '#fafafa';
+    });
+  </script>
+</body>
+</html>
