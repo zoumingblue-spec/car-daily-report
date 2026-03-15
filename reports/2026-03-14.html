@@ -72,49 +72,95 @@
     /* Star ratings → colored */
     .report-body td:last-child, .report-body td { white-space: pre-line; }
 
-    /* === Report Hero Banner === */
+    /* === Report Hero Banner — Sci-Fi === */
     .report-title-hero {
-      text-align: center; padding: 48px 24px 40px;
+      text-align: center; padding: 52px 24px 44px;
       margin: -36px -40px 40px;
-      background: linear-gradient(160deg, #0b1826 0%, #1a3c6e 50%, #0e2040 100%);
+      background: linear-gradient(180deg, #020c1b 0%, #071528 50%, #0c1e3c 100%);
       border-radius: var(--radius) var(--radius) 0 0;
       position: relative; overflow: hidden; color: #fff;
     }
-    .report-title-hero::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(56,130,246,0.45) 0%, transparent 70%);
+    /* Top neon border */
+    .report-title-hero::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent 0%, #00e5ff 30%, #7c3aed 50%, #00e5ff 70%, transparent 100%);
+    }
+    /* Scan line */
+    @keyframes heroScan {
+      0%   { top: -1px; opacity: 0; }
+      5%   { opacity: 0.8; }
+      95%  { opacity: 0.4; }
+      100% { top: 100%;  opacity: 0; }
+    }
+    .hero-scan {
+      position: absolute; left: 0; right: 0; height: 1px; top: 0;
+      background: linear-gradient(90deg, transparent, #00e5ff 40%, #00e5ff 60%, transparent);
+      animation: heroScan 5s ease-in-out infinite;
+      z-index: 3; pointer-events: none;
+    }
+    /* Perspective grid */
+    .hero-grid {
+      position: absolute; bottom: 0; left: -15%; right: -15%; height: 52%;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.07) 1px, transparent 1px);
+      background-size: 64px 36px;
+      transform: perspective(160px) rotateX(44deg);
+      transform-origin: bottom center;
       pointer-events: none;
     }
-    .report-title-hero::after {
-      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+    /* HUD corner brackets */
+    .hero-corner { position: absolute; width: 18px; height: 18px; }
+    .hero-tl { top: 10px; left: 10px; border-top: 1.5px solid rgba(0,229,255,.65); border-left: 1.5px solid rgba(0,229,255,.65); }
+    .hero-tr { top: 10px; right: 10px; border-top: 1.5px solid rgba(0,229,255,.65); border-right: 1.5px solid rgba(0,229,255,.65); }
+    .hero-bl { bottom: 10px; left: 10px; border-bottom: 1.5px solid rgba(0,229,255,.65); border-left: 1.5px solid rgba(0,229,255,.65); }
+    .hero-br { bottom: 10px; right: 10px; border-bottom: 1.5px solid rgba(0,229,255,.65); border-right: 1.5px solid rgba(0,229,255,.65); }
+    /* Side lines */
+    .hero-line {
+      position: absolute; top: 0; bottom: 0; width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(0,229,255,.3) 40%, rgba(0,229,255,.3) 60%, transparent);
+      pointer-events: none;
     }
-    .report-hero-car { position: relative; z-index: 1; margin-bottom: 6px; }
+    /* Pulsing dots */
+    @keyframes heroPulse {
+      0%, 100% { opacity: .15; transform: scale(1); }
+      50%       { opacity: 1;   transform: scale(1.8); }
+    }
+    .hero-dot {
+      position: absolute; width: 4px; height: 4px; border-radius: 50%;
+      background: #00e5ff; pointer-events: none;
+    }
+    /* Badge */
     .report-title-badge {
-      position: relative; z-index: 1; display: inline-block;
-      background: rgba(59,130,246,0.3); border: 1px solid rgba(59,130,246,0.6);
-      color: #93c5fd; font-size: 11px; font-weight: 600;
-      padding: 4px 14px; border-radius: 20px;
-      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px;
+      position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(0,229,255,.08); border: 1px solid rgba(0,229,255,.4);
+      color: #00e5ff; font-size: 11px; font-weight: 700;
+      padding: 4px 16px; border-radius: 2px;
+      letter-spacing: .15em; text-transform: uppercase; margin-bottom: 18px;
+      font-family: 'Courier New', monospace;
     }
+    /* Main title */
     .report-main-title {
       position: relative; z-index: 1;
-      font-size: 30px !important; font-weight: 800 !important; color: #fff !important;
-      letter-spacing: -0.02em; margin: 0 0 10px !important;
-      text-shadow: 0 2px 24px rgba(0,0,0,0.5);
+      font-size: 32px !important; font-weight: 800 !important; color: #fff !important;
+      letter-spacing: .04em; margin: 0 0 14px !important;
+      text-shadow: 0 0 24px rgba(0,229,255,.5), 0 0 48px rgba(0,229,255,.2), 0 2px 16px rgba(0,0,0,.9);
       border: none !important; padding: 0 !important;
     }
     .report-title-date {
       position: relative; z-index: 1;
-      font-size: 15px; color: rgba(255,255,255,0.72); margin-bottom: 20px;
+      font-size: 13px; color: rgba(0,229,255,.8); margin-bottom: 22px;
+      font-family: 'Courier New', monospace; letter-spacing: .12em;
     }
     .report-title-markets {
       position: relative; z-index: 1;
-      display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 10px;
-      font-size: 12px; color: rgba(255,255,255,0.6);
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 8px;
     }
     .report-title-markets span {
-      background: rgba(255,255,255,0.09); padding: 3px 10px; border-radius: 10px;
+      background: rgba(0,229,255,.06); border: 1px solid rgba(0,229,255,.22);
+      color: rgba(255,255,255,.75); padding: 3px 11px; border-radius: 2px;
+      font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: .05em;
     }
 
     /* Enhanced section headers */
@@ -504,7 +550,7 @@
 
   <footer class="site-footer">
     <p>本报告由 Claude AI 自动生成 · 数据来源于公开信息 · 仅供参考</p>
-    <p>生成时间: 2026/3/15 16:11:50</p>
+    <p>生成时间: 2026/3/15 16:34:00</p>
   </footer>
 
   <script>
