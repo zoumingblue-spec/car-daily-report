@@ -181,14 +181,42 @@
       box-shadow: 0 1px 4px rgba(37,99,235,0.08);
     }
 
+    /* === Hero legend (bottom-right) === */
+    .hero-legend {
+      position: absolute; bottom: 28px; right: 36px;
+      z-index: 2; text-align: right;
+      background: rgba(0,0,0,.45); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px; padding: 10px 14px;
+      display: flex; gap: 16px;
+    }
+    .hero-legend-title {
+      display: none; /* 两列并排，不需要总标题 */
+    }
+    .hero-legend-group {
+      display: flex; flex-direction: column; gap: 4px;
+      font-size: 11px; color: rgba(255,255,255,.75);
+      line-height: 1.5;
+    }
+    .hero-legend-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      color: rgba(255,255,255,.45); text-transform: uppercase; margin-bottom: 2px;
+    }
+    .legend-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; margin-right: 5px; vertical-align: middle;
+    }
+
     @media (max-width: 700px) {
       .report-body { padding: 20px 16px; }
       .report-body table { font-size: 12px; }
       .report-body th, .report-body td { padding: 7px 9px; }
       .header-brand h1 { font-size: 17px; }
-      .report-title-hero { height: 200px; margin: -20px -16px 24px; }
-      .hero-text-box { left: 20px; bottom: 18px; max-width: 80%; }
+      .report-title-hero { height: 220px; margin: -20px -16px 24px; }
+      .hero-text-box { left: 20px; bottom: 18px; max-width: 65%; }
       .report-main-title { font-size: 18px !important; }
+      .hero-legend { right: 16px; bottom: 18px; padding: 8px 10px; gap: 10px; }
+      .hero-legend-group { font-size: 10px; }
     }
     @media print {
       .site-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -229,9 +257,25 @@
       <span>US 美国</span><span>EU 欧洲</span><span>MID 中东</span><span>MX 墨西哥</span><span>JP 日本</span><span>AU 澳新</span>
     </div>
   </div>
+  <div class="hero-legend">
+    <div class="hero-legend-title">图例说明</div>
+    <div class="hero-legend-group">
+      <div class="hero-legend-label">来源质量</div>
+      <div><span class="legend-dot" style="background:#4ade80"></span>官方机构</div>
+      <div><span class="legend-dot" style="background:#fbbf24"></span>主流媒体</div>
+      <div><span class="legend-dot" style="background:#60a5fa"></span>行业媒体</div>
+    </div>
+    <div class="hero-legend-group">
+      <div class="hero-legend-label">置信度</div>
+      <div>✅ 多源验证</div>
+      <div>⚠️ 单一来源</div>
+      <div>❓ 来源矛盾</div>
+    </div>
+  </div>
 </div>
 <!--HERO-END-->
 
+      
       <div class="report-title-hero">
   <div class="hero-scan"></div>
   <div class="hero-corner hero-tl"></div>
@@ -574,7 +618,7 @@
 
   <footer class="site-footer">
     <p>本报告由 Claude AI 自动生成 · 数据来源于公开信息 · 仅供参考</p>
-    <p>生成时间: 2026/3/15 18:43:21</p>
+    <p>生成时间: 2026/3/15 18:58:54</p>
   </footer>
 
   <script>
