@@ -818,6 +818,44 @@ function sharedStyles() {
     .competitor-section table tr:nth-child(even) td { background: #fdf4ff !important; }
     .competitor-section table tr:hover td { background: #fae8ff !important; }
 
+    /* === 章节快速跳转 TOC === */
+    .toc-panel {
+      position: fixed; right: 16px; top: 50%;
+      transform: translateY(-50%);
+      z-index: 200;
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(226,232,240,0.8);
+      border-radius: 24px; padding: 10px 7px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+      display: flex; flex-direction: column; gap: 2px;
+      max-width: 34px; overflow: hidden;
+      transition: max-width 0.22s cubic-bezier(0.4,0,0.2,1),
+                  border-radius 0.22s, padding 0.22s;
+    }
+    .toc-panel:hover { max-width: 210px; border-radius: 12px; padding: 10px 14px; }
+    .toc-item {
+      display: flex; align-items: center; gap: 9px;
+      cursor: pointer; padding: 4px 0;
+      color: #94a3b8; transition: color 0.18s; white-space: nowrap;
+    }
+    .toc-item:hover, .toc-item.active { color: var(--accent); }
+    .toc-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #cbd5e1; flex-shrink: 0;
+      transition: background 0.18s, transform 0.18s;
+    }
+    .toc-item.active .toc-dot { background: var(--accent); transform: scale(1.5); }
+    .toc-label {
+      font-size: 12px; font-weight: 500; opacity: 0;
+      overflow: hidden; text-overflow: ellipsis; max-width: 160px;
+      transition: opacity 0.18s;
+    }
+    .toc-panel:hover .toc-label { opacity: 1; }
+    .report-body h4 { scroll-margin-top: 80px; }
+    @media (max-width: 1100px) { .toc-panel { display: none; } }
+
     @media (max-width: 700px) {
       .report-body { padding: 20px 16px; }
       .report-body table { font-size: 12px; }
@@ -884,6 +922,47 @@ function reportScript() {
       wrapper.appendChild(h4);
       siblings.forEach(s => wrapper.appendChild(s));
     });
+
+    // 章节快速跳转 TOC
+    (function buildTOC() {
+      var body = document.querySelector('.report-body');
+      if (!body) return;
+      var headings = Array.from(body.querySelectorAll('h4'));
+      if (headings.length < 2) return;
+      headings.forEach(function(h, i) { if (!h.id) h.id = 'toc-s' + i; });
+      var panel = document.createElement('div');
+      panel.className = 'toc-panel';
+      var html = '';
+      headings.forEach(function(h, i) {
+        var raw = h.textContent.trim().replace(/\s+/g, ' ');
+        // 截取章节号+简短标题，最多18字
+        var label = raw.replace(/^(#+\s*)/, '').slice(0, 18);
+        html += '<div class="toc-item" data-id="toc-s' + i + '">'
+              + '<span class="toc-dot"></span>'
+              + '<span class="toc-label">' + label + '</span>'
+              + '</div>';
+      });
+      panel.innerHTML = html;
+      document.body.appendChild(panel);
+      panel.querySelectorAll('.toc-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          var el = document.getElementById(item.getAttribute('data-id'));
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+      var items = panel.querySelectorAll('.toc-item');
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            var id = entry.target.id;
+            items.forEach(function(item) {
+              item.classList.toggle('active', item.getAttribute('data-id') === id);
+            });
+          }
+        });
+      }, { rootMargin: '-10% 0px -80% 0px', threshold: 0 });
+      headings.forEach(function(h) { observer.observe(h); });
+    })();
 
     // 来源质量标签着色
     document.querySelectorAll('a').forEach(a => {
