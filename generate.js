@@ -932,20 +932,20 @@ function reportScript() {
       headings.forEach(function(h, i) { if (!h.id) h.id = 'toc-s' + i; });
       var panel = document.createElement('div');
       panel.className = 'toc-panel';
-      function escHtml(s) {
-        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      }
-      var html = '';
       headings.forEach(function(h, i) {
-        var raw = h.textContent.trim().replace(/\s+/g, ' ');
-        // 截取章节号+简短标题，最多18字
-        var label = escHtml(raw.replace(/^(#+\s*)/, '').slice(0, 18));
-        html += '<div class="toc-item" data-id="toc-s' + i + '">'
-              + '<span class="toc-dot"></span>'
-              + '<span class="toc-label">' + label + '</span>'
-              + '</div>';
+        var raw = h.textContent.trim().replace(/\s+/g, ' ').slice(0, 18);
+        var item = document.createElement('div');
+        item.className = 'toc-item';
+        item.setAttribute('data-id', 'toc-s' + i);
+        var dot = document.createElement('span');
+        dot.className = 'toc-dot';
+        var labelEl = document.createElement('span');
+        labelEl.className = 'toc-label';
+        labelEl.textContent = raw;   // textContent 不解析 HTML，天然安全
+        item.appendChild(dot);
+        item.appendChild(labelEl);
+        panel.appendChild(item);
       });
-      panel.innerHTML = html;
       document.body.appendChild(panel);
       panel.querySelectorAll('.toc-item').forEach(function(item) {
         item.addEventListener('click', function() {
