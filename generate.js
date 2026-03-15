@@ -25,7 +25,36 @@ if (!fs.existsSync(PROMPT_FILE)) {
   process.exit(1);
 }
 
-const prompt = fs.readFileSync(PROMPT_FILE, 'utf-8');
+const basePrompt = fs.readFileSync(PROMPT_FILE, 'utf-8');
+
+// ── 读取关注车型列表，拼装置顶任务 ───────────────────────
+const WATCHLIST_FILE = path.join(__dirname, 'watchlist.json');
+let prompt = basePrompt;
+if (fs.existsSync(WATCHLIST_FILE)) {
+  const { vehicles = [] } = JSON.parse(fs.readFileSync(WATCHLIST_FILE, 'utf-8'));
+  if (vehicles.length) {
+    const watchlistPrompt = `## 【置顶任务：最高优先级】我的关注车型速报
+
+在所有正式章节（一、二、三…）**之前**，先输出以下速报区。搜索过程中请特别关注这些车型的最新动态：
+
+**关注车型**：${vehicles.join(' / ')}
+
+输出格式（使用 #### 级别标题）：
+
+#### 🔔 我的关注 · 今日速报
+
+| 车型 | 核心动态（≤40字） | 置信度 | 配件机会变化 |
+|-----|----------------|--------|------------|
+| 车型名 | 动态描述 | ✅/⚠️/❓ | ↑上升 / ↓下降 / — 持平 |
+
+若某车型近7日确无新动态，填"近7日暂无新动态 ⚠️"。
+
+---
+
+`;
+    prompt = watchlistPrompt + basePrompt;
+  }
+}
 
 // ── 运行 Claude CLI（异步，避免 Windows stdin 死锁）────────
 console.log('🚀 正在生成日报，预计需要 3~5 分钟...\n');
@@ -147,12 +176,11 @@ function postProcessContent(html, dateId) {
   html = html.replace(/<p>[^<]*(数据收集完毕|正在生成报告|收集完毕|正在整合)[^<]*<\/p>\s*/gi, '');
   html = html.replace(/^\s*<hr\s*\/?>\s*/i, '');
 
-  // Rebuild 场景：旧 banner 已存在，整块剥离（删除第一个 <h4> 之前的所有内容）
-  if (html.includes('class="report-title-hero"')) {
-    html = html.replace(/^[\s\S]*?(?=<h4>)/, '');
-  }
+  // Rebuild 场景：用注释标记精准剥离旧 banner，保留 watchlist 等其他内容
+  html = html.replace(/<!--HERO-START-->[\s\S]*?<!--HERO-END-->\n?/, '');
 
-  const heroBanner = `<div class="report-title-hero">
+  const heroBanner = `<!--HERO-START-->
+<div class="report-title-hero">
   <div class="hero-scan"></div>
   <div class="hero-corner hero-tl"></div>
   <div class="hero-corner hero-tr"></div>
@@ -165,7 +193,8 @@ function postProcessContent(html, dateId) {
       <span>US 美国</span><span>EU 欧洲</span><span>MID 中东</span><span>MX 墨西哥</span><span>JP 日本</span><span>AU 澳新</span>
     </div>
   </div>
-</div>`;
+</div>
+<!--HERO-END-->`;
 
   // 新生成场景：将 h3 标题替换为 hero banner
   const replaced = html.replace(
@@ -537,6 +566,31 @@ function sharedStyles() {
       font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
+    /* === 我的关注 watchlist 区 === */
+    .watchlist-section {
+      margin-bottom: 8px;
+    }
+    .watchlist-section h4 {
+      background: linear-gradient(90deg, #fffbeb, #fef9ee) !important;
+      border-left: 4px solid #f59e0b !important;
+      color: #78350f !important;
+    }
+    .watchlist-section table th {
+      background: #92400e !important;
+    }
+    .watchlist-section table tr:nth-child(even) td { background: #fffbeb !important; }
+    .watchlist-section table tr:hover td { background: #fef3c7 !important; }
+
+    /* === 来源质量标签 === */
+    .src-official  { color: #16a34a; font-weight: 700; font-size: 12px; }
+    .src-media     { color: #ca8a04; font-weight: 700; font-size: 12px; }
+    .src-industry  { color: #2563eb; font-weight: 700; font-size: 12px; }
+
+    /* === 置信度标记 === */
+    .conf-verified  { color: #16a34a; }
+    .conf-single    { color: #ca8a04; }
+    .conf-conflict  { color: #dc2626; }
+
     /* Enhanced section headers */
     .report-body h4 {
       font-size: 16px; color: #1a3869; margin-top: 36px;
@@ -566,14 +620,36 @@ function sharedStyles() {
 // ═══════════════════════════════════════════════════════════
 function reportScript() {
   return `<script>
-    // 自动为表格单元格中的星级评分上色
+    // 星级评分 & 正负面标记
     document.querySelectorAll('td').forEach(td => {
       if (td.textContent.includes('⭐⭐⭐')) td.style.color = '#16a34a';
       else if (td.textContent.includes('⭐⭐')) td.style.color = '#ca8a04';
-      // 正负面标记
       if (td.textContent.startsWith('✅')) td.style.background = '#f0fdf4';
       if (td.textContent.startsWith('❌')) td.style.background = '#fef2f2';
       if (td.textContent.startsWith('➖')) td.style.background = '#fafafa';
+    });
+
+    // 🔔 我的关注 — 高亮整个 section
+    document.querySelectorAll('h4').forEach(h4 => {
+      if (!h4.textContent.includes('🔔')) return;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'watchlist-section';
+      let el = h4.nextElementSibling;
+      const siblings = [];
+      while (el && el.tagName !== 'H4') { siblings.push(el); el = el.nextElementSibling; }
+      h4.parentNode.insertBefore(wrapper, h4);
+      wrapper.appendChild(h4);
+      siblings.forEach(s => wrapper.appendChild(s));
+    });
+
+    // 来源质量标签着色
+    document.querySelectorAll('a').forEach(a => {
+      const prev = a.previousSibling;
+      if (!prev || prev.nodeType !== 3) return;
+      const t = prev.textContent;
+      if (t.includes('🟢【官方】'))   { const s = document.createElement('span'); s.className='src-official'; s.textContent='🟢 官方'; a.parentNode.insertBefore(s,a); prev.textContent=prev.textContent.replace(/🟢【官方】\s*/,''); }
+      else if (t.includes('🟡【媒体】')) { const s = document.createElement('span'); s.className='src-media';    s.textContent='🟡 媒体'; a.parentNode.insertBefore(s,a); prev.textContent=prev.textContent.replace(/🟡【媒体】\s*/,''); }
+      else if (t.includes('🔵【行业】')) { const s = document.createElement('span'); s.className='src-industry'; s.textContent='🔵 行业'; a.parentNode.insertBefore(s,a); prev.textContent=prev.textContent.replace(/🔵【行业】\s*/,''); }
     });
   </script>`;
 }

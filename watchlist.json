@@ -1,0 +1,9 @@
+{
+  "vehicles": [
+    "Tesla Model Y Juniper",
+    "Toyota RAV4 PHEV 2026",
+    "BYD Atto 3",
+    "Tesla Cybertruck Dual Motor"
+  ],
+  "_note": "编辑此文件添加或删除关注车型，每次生成报告时自动出现在顶部速报区"
+}

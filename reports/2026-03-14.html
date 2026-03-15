@@ -148,6 +148,31 @@
       font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
+    /* === 我的关注 watchlist 区 === */
+    .watchlist-section {
+      margin-bottom: 8px;
+    }
+    .watchlist-section h4 {
+      background: linear-gradient(90deg, #fffbeb, #fef9ee) !important;
+      border-left: 4px solid #f59e0b !important;
+      color: #78350f !important;
+    }
+    .watchlist-section table th {
+      background: #92400e !important;
+    }
+    .watchlist-section table tr:nth-child(even) td { background: #fffbeb !important; }
+    .watchlist-section table tr:hover td { background: #fef3c7 !important; }
+
+    /* === 来源质量标签 === */
+    .src-official  { color: #16a34a; font-weight: 700; font-size: 12px; }
+    .src-media     { color: #ca8a04; font-weight: 700; font-size: 12px; }
+    .src-industry  { color: #2563eb; font-weight: 700; font-size: 12px; }
+
+    /* === 置信度标记 === */
+    .conf-verified  { color: #16a34a; }
+    .conf-single    { color: #ca8a04; }
+    .conf-conflict  { color: #dc2626; }
+
     /* Enhanced section headers */
     .report-body h4 {
       font-size: 16px; color: #1a3869; margin-top: 36px;
@@ -190,6 +215,23 @@
 
   <main class="main-wrap">
     <article class="report-body">
+      <!--HERO-START-->
+<div class="report-title-hero">
+  <div class="hero-scan"></div>
+  <div class="hero-corner hero-tl"></div>
+  <div class="hero-corner hero-tr"></div>
+  <div class="hero-corner hero-bl"></div>
+  <div class="hero-corner hero-br"></div>
+  <div class="hero-text-box">
+    <div class="report-main-title">全球车型销售趋势与车配动态</div>
+    <div class="report-title-date">[ 2026-03-14 ]</div>
+    <div class="report-title-markets">
+      <span>US 美国</span><span>EU 欧洲</span><span>MID 中东</span><span>MX 墨西哥</span><span>JP 日本</span><span>AU 澳新</span>
+    </div>
+  </div>
+</div>
+<!--HERO-END-->
+
       <div class="report-title-hero">
   <div class="hero-scan"></div>
   <div class="hero-corner hero-tl"></div>
@@ -532,18 +574,40 @@
 
   <footer class="site-footer">
     <p>本报告由 Claude AI 自动生成 · 数据来源于公开信息 · 仅供参考</p>
-    <p>生成时间: 2026/3/15 17:18:40</p>
+    <p>生成时间: 2026/3/15 18:43:21</p>
   </footer>
 
   <script>
-    // 自动为表格单元格中的星级评分上色
+    // 星级评分 & 正负面标记
     document.querySelectorAll('td').forEach(td => {
       if (td.textContent.includes('⭐⭐⭐')) td.style.color = '#16a34a';
       else if (td.textContent.includes('⭐⭐')) td.style.color = '#ca8a04';
-      // 正负面标记
       if (td.textContent.startsWith('✅')) td.style.background = '#f0fdf4';
       if (td.textContent.startsWith('❌')) td.style.background = '#fef2f2';
       if (td.textContent.startsWith('➖')) td.style.background = '#fafafa';
+    });
+
+    // 🔔 我的关注 — 高亮整个 section
+    document.querySelectorAll('h4').forEach(h4 => {
+      if (!h4.textContent.includes('🔔')) return;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'watchlist-section';
+      let el = h4.nextElementSibling;
+      const siblings = [];
+      while (el && el.tagName !== 'H4') { siblings.push(el); el = el.nextElementSibling; }
+      h4.parentNode.insertBefore(wrapper, h4);
+      wrapper.appendChild(h4);
+      siblings.forEach(s => wrapper.appendChild(s));
+    });
+
+    // 来源质量标签着色
+    document.querySelectorAll('a').forEach(a => {
+      const prev = a.previousSibling;
+      if (!prev || prev.nodeType !== 3) return;
+      const t = prev.textContent;
+      if (t.includes('🟢【官方】'))   { const s = document.createElement('span'); s.className='src-official'; s.textContent='🟢 官方'; a.parentNode.insertBefore(s,a); prev.textContent=prev.textContent.replace(/🟢【官方】s*/,''); }
+      else if (t.includes('🟡【媒体】')) { const s = document.createElement('span'); s.className='src-media';    s.textContent='🟡 媒体'; a.parentNode.insertBefore(s,a); prev.textContent=prev.textContent.replace(/🟡【媒体】s*/,''); }
+      else if (t.includes('🔵【行业】')) { const s = document.createElement('span'); s.className='src-industry'; s.textContent='🔵 行业'; a.parentNode.insertBefore(s,a); prev.textContent=prev.textContent.replace(/🔵【行业】s*/,''); }
     });
   </script>
 </body>
