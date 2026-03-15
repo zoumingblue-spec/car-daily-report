@@ -1,0 +1,13 @@
+{
+  "brands": [
+    {
+      "name": "WeatherTech",
+      "focus_skus": ["floor mat", "cargo liner", "Tesla mat", "all-weather mat"]
+    },
+    {
+      "name": "LasFit",
+      "focus_skus": ["floor mat", "cargo liner", "Tesla mat", "3D mat"]
+    }
+  ],
+  "_note": "编辑此文件添加或删除竞品品牌，每次生成报告时自动监控"
+}

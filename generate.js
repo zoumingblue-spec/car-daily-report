@@ -56,6 +56,18 @@ if (fs.existsSync(WATCHLIST_FILE)) {
   }
 }
 
+// ── 读取竞品列表，拼装竞品监控任务 ─────────────────────────
+const COMPETITORS_FILE = path.join(__dirname, 'competitors.json');
+if (fs.existsSync(COMPETITORS_FILE)) {
+  const { brands = [] } = JSON.parse(fs.readFileSync(COMPETITORS_FILE, 'utf-8'));
+  if (brands.length) {
+    const competitorList = brands.map(b =>
+      `- **${b.name}**（重点关注SKU：${b.focus_skus.join('、')}）`
+    ).join('\n');
+    prompt += `\n\n---\n\n## 【附加任务：竞品监控】\n\n请在报告末尾（六、行动建议之后）增加 **七、竞品监控** 章节，搜索以下品牌在亚马逊近7天的最新动态：\n\n${competitorList}\n\n输出格式（使用 #### 级别标题）：\n\n#### 七、竞品监控\n\n| 品牌 | 近期动态摘要（≤40字） | 价格区间变化 | 评分/评论动态 | 对我方配件业务影响 |\n|------|--------------------|------------|------------|------------------|\n\n`;
+  }
+}
+
 // ── 运行 Claude CLI（异步，避免 Windows stdin 死锁）────────
 console.log('🚀 正在生成日报，预计需要 3~5 分钟...\n');
 
@@ -114,6 +126,7 @@ if (process.argv.includes('--rebuild')) {
     console.log(`✅ 已重建报告: ${f}`);
   }
   buildIndexPage();
+  buildSearchIndex();
   console.log(`✅ 首页已重建: ${INDEX_FILE}`);
   process.exit(0);
 }
@@ -164,6 +177,7 @@ if (process.argv.includes('--rebuild')) {
 
   // ── 更新首页 ────────────────────────────────────────────
   buildIndexPage();
+  buildSearchIndex();
   console.log(`✅ 首页已更新: ${INDEX_FILE}`);
   console.log(`\n🌐 请用浏览器打开: ${INDEX_FILE}`);
 })();
@@ -359,6 +373,42 @@ function buildIndexPage() {
 
     .badge-new { background: #e74c3c; color: #fff; font-size: 11px; padding: 1px 5px; border-radius: 10px; margin-left: 4px; vertical-align: middle; }
     .no-report { color: #888; text-align: center; padding: 40px; }
+
+    /* Search bar */
+    .search-bar-wrap { margin-bottom: 20px; }
+    .search-inner {
+      display: flex; align-items: center; gap: 10px;
+      background: #fff; border-radius: 10px; box-shadow: var(--shadow);
+      padding: 10px 16px;
+    }
+    .search-icon { font-size: 16px; flex-shrink: 0; }
+    .search-input {
+      flex: 1; border: none; outline: none; font-size: 14px;
+      color: #1e293b; background: transparent;
+    }
+    .search-count { font-size: 12px; color: #94a3b8; white-space: nowrap; }
+    .search-clear {
+      border: none; background: none; cursor: pointer; color: #94a3b8;
+      font-size: 14px; padding: 2px 4px; border-radius: 4px;
+      display: none;
+    }
+    .search-clear.visible { display: block; }
+    .search-clear:hover { background: #f1f5f9; color: #475569; }
+    /* Search results dropdown */
+    .search-results {
+      list-style: none; margin: 8px 0 0; padding: 0;
+      background: #fff; border-radius: 10px; box-shadow: var(--shadow);
+      overflow: hidden; max-height: 360px; overflow-y: auto;
+    }
+    .search-results li a {
+      display: block; padding: 12px 18px; text-decoration: none;
+      color: #1e293b; border-bottom: 1px solid #f1f5f9;
+    }
+    .search-results li a:hover { background: #f8fafc; }
+    .search-result-date { font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 3px; }
+    .search-result-snippet { font-size: 13px; color: #475569; line-height: 1.5; }
+    .search-result-snippet em { background: #fef08a; font-style: normal; border-radius: 2px; padding: 0 2px; }
+    .search-no-result { padding: 16px 18px; color: #94a3b8; font-size: 14px; }
     @media (max-width: 700px) {
       .index-layout { grid-template-columns: 1fr; }
       .sidebar { position: static; width: auto !important; }
@@ -387,6 +437,15 @@ function buildIndexPage() {
   </header>
 
   <main class="main-wrap">
+    <div class="search-bar-wrap">
+      <div class="search-inner">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="搜索报告内容，如「Tesla」「脚垫」「召回」…" autocomplete="off" />
+        <span class="search-count" id="searchCount"></span>
+        <button class="search-clear" id="searchClear" onclick="clearSearch()" title="清除搜索">✕</button>
+      </div>
+      <ul class="search-results" id="searchResults" hidden></ul>
+    </div>
     <div class="index-layout">
       <aside class="sidebar" id="sidebar">
         <!-- 收起状态 -->
@@ -404,7 +463,7 @@ function buildIndexPage() {
         </div>
       </aside>
 
-      <article class="report-body">
+      <article class="report-body" id="mainReport">
         ${latestContent}
       </article>
     </div>
@@ -426,11 +485,89 @@ function buildIndexPage() {
     if (localStorage.getItem('sbCollapsed') === '1') {
       document.getElementById('sidebar').classList.add('is-collapsed');
     }
+
+    // ── 搜索功能 ─────────────────────────────────────────
+    let searchIndex = null;
+    async function loadSearchIndex() {
+      if (searchIndex) return searchIndex;
+      try {
+        const res = await fetch('search-index.json');
+        searchIndex = await res.json();
+      } catch(e) { searchIndex = []; }
+      return searchIndex;
+    }
+    function escapeRegex(s) { return s.replace(/[.+*?^\\|()\[\]-]/g, '\\\\$&'); }
+    function getSnippet(text, keyword, len = 120) {
+      const idx = text.toLowerCase().indexOf(keyword.toLowerCase());
+      if (idx < 0) return text.slice(0, len) + '…';
+      const start = Math.max(0, idx - 40);
+      const raw = text.slice(start, start + len);
+      const re = new RegExp('(' + escapeRegex(keyword) + ')', 'gi');
+      return (start > 0 ? '…' : '') + raw.replace(re, '<em>$1</em>') + '…';
+    }
+    const input = document.getElementById('searchInput');
+    const resultsEl = document.getElementById('searchResults');
+    const countEl = document.getElementById('searchCount');
+    const clearBtn = document.getElementById('searchClear');
+    let debounceTimer = null;
+    input.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(doSearch, 280);
+    });
+    async function doSearch() {
+      const q = input.value.trim();
+      clearBtn.classList.toggle('visible', q.length > 0);
+      if (!q) { resultsEl.hidden = true; countEl.textContent = ''; return; }
+      const idx = await loadSearchIndex();
+      const hits = idx.filter(r => r.text.toLowerCase().includes(q.toLowerCase()));
+      countEl.textContent = hits.length ? \`找到 \${hits.length} 篇\` : '无匹配';
+      if (!hits.length) {
+        resultsEl.innerHTML = '<li class="search-no-result">未找到相关内容，换个关键词试试</li>';
+        resultsEl.hidden = false; return;
+      }
+      resultsEl.innerHTML = hits.slice(0, 10).map(r =>
+        \`<li><a href="\${r.url}">
+          <div class="search-result-date">\${r.date}</div>
+          <div class="search-result-snippet">\${getSnippet(r.text, q)}</div>
+        </a></li>\`
+      ).join('');
+      resultsEl.hidden = false;
+    }
+    function clearSearch() {
+      input.value = ''; resultsEl.hidden = true;
+      countEl.textContent = ''; clearBtn.classList.remove('visible');
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.search-bar-wrap')) { resultsEl.hidden = true; }
+    });
   </script>
 </body>
 </html>`;
 
   fs.writeFileSync(INDEX_FILE, html, 'utf-8');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  搜索索引生成
+// ═══════════════════════════════════════════════════════════
+function buildSearchIndex() {
+  const reports = fs.readdirSync(REPORTS_DIR)
+    .filter(f => /^\d{4}-\d{2}-\d{2}\.html$/.test(f))
+    .sort()
+    .reverse();
+
+  const index = reports.map(f => {
+    const raw = fs.readFileSync(path.join(REPORTS_DIR, f), 'utf-8');
+    const bodyMatch = raw.match(/<article class="report-body">([\s\S]*?)<\/article>/);
+    const text = bodyMatch
+      ? bodyMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+      : '';
+    return { date: f.replace('.html', ''), url: `reports/${f}`, text };
+  });
+
+  const indexFile = path.join(__dirname, 'search-index.json');
+  fs.writeFileSync(indexFile, JSON.stringify(index), 'utf-8');
+  console.log(`✅ 搜索索引已更新: ${indexFile}`);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -640,6 +777,22 @@ function sharedStyles() {
       border-radius: 50%; margin-right: 5px; vertical-align: middle;
     }
 
+    /* === 配件机会热力图 === */
+    .heat-3 { background: #dcfce7 !important; color: #14532d !important; font-weight: 700; }
+    .heat-2 { background: #fef9c3 !important; color: #713f12 !important; font-weight: 600; }
+    .heat-1 { background: #fff7ed !important; color: #9a3412 !important; }
+    .heat-0 { background: #f8fafc !important; color: #94a3b8 !important; }
+
+    /* === 竞品监控区 === */
+    .competitor-section h4 {
+      background: linear-gradient(90deg, #fdf2f8, #faf5ff) !important;
+      border-left: 4px solid #a855f7 !important;
+      color: #581c87 !important;
+    }
+    .competitor-section table th { background: #6b21a8 !important; }
+    .competitor-section table tr:nth-child(even) td { background: #fdf4ff !important; }
+    .competitor-section table tr:hover td { background: #fae8ff !important; }
+
     @media (max-width: 700px) {
       .report-body { padding: 20px 16px; }
       .report-body table { font-size: 12px; }
@@ -677,6 +830,28 @@ function reportScript() {
       if (!h4.textContent.includes('🔔')) return;
       const wrapper = document.createElement('div');
       wrapper.className = 'watchlist-section';
+      let el = h4.nextElementSibling;
+      const siblings = [];
+      while (el && el.tagName !== 'H4') { siblings.push(el); el = el.nextElementSibling; }
+      h4.parentNode.insertBefore(wrapper, h4);
+      wrapper.appendChild(h4);
+      siblings.forEach(s => wrapper.appendChild(s));
+    });
+
+    // 配件机会热力图着色（检测 🔥 符号）
+    document.querySelectorAll('.report-body td').forEach(td => {
+      const t = td.textContent.trim();
+      if (t.includes('🔥🔥🔥'))      td.classList.add('heat-3');
+      else if (t.includes('🔥🔥'))   td.classList.add('heat-2');
+      else if (t.startsWith('🔥'))   td.classList.add('heat-1');
+      else if (t === '—' && td.closest('table') && td.closest('table').textContent.includes('🔥')) td.classList.add('heat-0');
+    });
+
+    // 竞品监控区高亮
+    document.querySelectorAll('h4').forEach(h4 => {
+      if (!h4.textContent.includes('竞品监控')) return;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'competitor-section';
       let el = h4.nextElementSibling;
       const siblings = [];
       while (el && el.tagName !== 'H4') { siblings.push(el); el = el.nextElementSibling; }
