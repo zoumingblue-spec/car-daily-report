@@ -162,7 +162,7 @@ function postProcessContent(html, dateId) {
     <div class="report-main-title">全球车型销售趋势与车配动态</div>
     <div class="report-title-date">[ ${dateId} ]</div>
     <div class="report-title-markets">
-      <span>🇺🇸 美国</span><span>🇪🇺 欧洲</span><span>🌍 中东</span><span>🇲🇽 墨西哥</span><span>🇯🇵 日本</span><span>🇦🇺 澳新</span>
+      <span>🇺🇸 美国</span><span>🇪🇺 欧洲</span><span>MID 中东</span><span>🇲🇽 墨西哥</span><span>🇯🇵 日本</span><span>🇦🇺 澳新</span>
     </div>
   </div>
 </div>`;
