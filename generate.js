@@ -932,11 +932,14 @@ function reportScript() {
       headings.forEach(function(h, i) { if (!h.id) h.id = 'toc-s' + i; });
       var panel = document.createElement('div');
       panel.className = 'toc-panel';
+      function escHtml(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
       var html = '';
       headings.forEach(function(h, i) {
         var raw = h.textContent.trim().replace(/\s+/g, ' ');
         // 截取章节号+简短标题，最多18字
-        var label = raw.replace(/^(#+\s*)/, '').slice(0, 18);
+        var label = escHtml(raw.replace(/^(#+\s*)/, '').slice(0, 18));
         html += '<div class="toc-item" data-id="toc-s' + i + '">'
               + '<span class="toc-dot"></span>'
               + '<span class="toc-label">' + label + '</span>'

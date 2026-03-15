@@ -330,6 +330,7 @@
 <!--HERO-END-->
 
       
+      
       <h4>🔔 我的关注 · 今日速报</h4>
 <table>
 <thead>
@@ -830,7 +831,7 @@
 
   <footer class="site-footer">
     <p>本报告由 Claude AI 自动生成 · 数据来源于公开信息 · 仅供参考</p>
-    <p>生成时间: 2026/3/15 21:14:16</p>
+    <p>生成时间: 2026/3/15 23:33:28</p>
   </footer>
 
   <script>
@@ -887,11 +888,14 @@
       headings.forEach(function(h, i) { if (!h.id) h.id = 'toc-s' + i; });
       var panel = document.createElement('div');
       panel.className = 'toc-panel';
+      function escHtml(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
       var html = '';
       headings.forEach(function(h, i) {
         var raw = h.textContent.trim().replace(/s+/g, ' ');
         // 截取章节号+简短标题，最多18字
-        var label = raw.replace(/^(#+s*)/, '').slice(0, 18);
+        var label = escHtml(raw.replace(/^(#+s*)/, '').slice(0, 18));
         html += '<div class="toc-item" data-id="toc-s' + i + '">'
               + '<span class="toc-dot"></span>'
               + '<span class="toc-label">' + label + '</span>'
