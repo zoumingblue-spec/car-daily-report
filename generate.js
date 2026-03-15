@@ -259,6 +259,26 @@ function postProcessContent(html, dateId) {
   // Rebuild 场景：h3 已不存在，直接前置 banner
   html = (replaced !== html) ? replaced : heroBanner + '\n' + html;
 
+  // ── 服务端提取 h4 标题，注入 TOC 数据（避免客户端 DOM 文字提取的编码问题）──
+  const tocSections = [];
+  let h4Idx = 0;
+  html = html.replace(/<h4([^>]*)>([\s\S]*?)<\/h4>/gi, (match, attrs, inner) => {
+    const id = 'toc-s' + h4Idx++;
+    // 剥除内嵌标签，解码常见 HTML 实体，取纯文本
+    const text = inner
+      .replace(/<[^>]+>/g, '')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ').trim();
+    tocSections.push({ id, label: text.slice(0, 20) });
+    const cleanAttrs = attrs.replace(/\s*id="[^"]*"/, '');
+    return `<h4${cleanAttrs} id="${id}">${inner}</h4>`;
+  });
+  if (tocSections.length >= 2) {
+    const json = JSON.stringify(tocSections).replace(/<\//g, '<\\/');
+    html += `\n<script>window._tocSections=${json};</script>`;
+  }
+
   return html.trim();
 }
 
@@ -923,48 +943,45 @@ function reportScript() {
       siblings.forEach(s => wrapper.appendChild(s));
     });
 
-    // 章节快速跳转 TOC
+    // 章节快速跳转 TOC（数据由服务端注入 window._tocSections，避免客户端编码问题）
     (function buildTOC() {
-      var body = document.querySelector('.report-body');
-      if (!body) return;
-      var headings = Array.from(body.querySelectorAll('h4'));
-      if (headings.length < 2) return;
-      headings.forEach(function(h, i) { if (!h.id) h.id = 'toc-s' + i; });
+      var sections = window._tocSections;
+      if (!sections || sections.length < 2) return;
       var panel = document.createElement('div');
       panel.className = 'toc-panel';
-      headings.forEach(function(h, i) {
-        var raw = h.textContent.trim().replace(/\s+/g, ' ').slice(0, 18);
+      sections.forEach(function(sec) {
         var item = document.createElement('div');
         item.className = 'toc-item';
-        item.setAttribute('data-id', 'toc-s' + i);
+        item.setAttribute('data-id', sec.id);
+        item.addEventListener('click', function() {
+          var el = document.getElementById(sec.id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
         var dot = document.createElement('span');
         dot.className = 'toc-dot';
-        var labelEl = document.createElement('span');
-        labelEl.className = 'toc-label';
-        labelEl.textContent = raw;   // textContent 不解析 HTML，天然安全
+        var lbl = document.createElement('span');
+        lbl.className = 'toc-label';
+        lbl.textContent = sec.label;
         item.appendChild(dot);
-        item.appendChild(labelEl);
+        item.appendChild(lbl);
         panel.appendChild(item);
       });
       document.body.appendChild(panel);
-      panel.querySelectorAll('.toc-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-          var el = document.getElementById(item.getAttribute('data-id'));
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-      });
       var items = panel.querySelectorAll('.toc-item');
-      var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) {
-            var id = entry.target.id;
-            items.forEach(function(item) {
-              item.classList.toggle('active', item.getAttribute('data-id') === id);
+      var obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) {
+            var id = e.target.id;
+            items.forEach(function(it) {
+              it.classList.toggle('active', it.getAttribute('data-id') === id);
             });
           }
         });
       }, { rootMargin: '-10% 0px -80% 0px', threshold: 0 });
-      headings.forEach(function(h) { observer.observe(h); });
+      sections.forEach(function(sec) {
+        var el = document.getElementById(sec.id);
+        if (el) obs.observe(el);
+      });
     })();
 
     // 来源质量标签着色
