@@ -185,13 +185,38 @@ if (process.argv.includes('--rebuild')) {
 // ═══════════════════════════════════════════════════════════
 //  报告内容后处理：注入 Hero Banner，去除过程文字
 // ═══════════════════════════════════════════════════════════
+// 深度匹配，剥离所有 .report-title-hero div（无论是否带注释标记）
+function stripAllHeroBanners(html) {
+  // 先去掉带注释标记的整块
+  html = html.replace(/<!--HERO-START-->[\s\S]*?<!--HERO-END-->\n?/g, '');
+  // 再去掉遗留的裸 hero div（计数嵌套层级）
+  const startTag = '<div class="report-title-hero">';
+  let result = '';
+  let pos = 0;
+  while (true) {
+    const idx = html.indexOf(startTag, pos);
+    if (idx < 0) { result += html.slice(pos); break; }
+    result += html.slice(pos, idx);
+    let depth = 1, i = idx + startTag.length;
+    while (i < html.length && depth > 0) {
+      const open = html.indexOf('<div', i);
+      const close = html.indexOf('</div>', i);
+      if (close < 0) break;
+      if (open >= 0 && open < close) { depth++; i = open + 4; }
+      else { depth--; i = close + 6; }
+    }
+    pos = i;
+  }
+  return result;
+}
+
 function postProcessContent(html, dateId) {
   // 去除过程描述性段落
   html = html.replace(/<p>[^<]*(数据收集完毕|正在生成报告|收集完毕|正在整合)[^<]*<\/p>\s*/gi, '');
   html = html.replace(/^\s*<hr\s*\/?>\s*/i, '');
 
-  // Rebuild 场景：用注释标记精准剥离旧 banner，保留 watchlist 等其他内容
-  html = html.replace(/<!--HERO-START-->[\s\S]*?<!--HERO-END-->\n?/, '');
+  // 剥离所有旧 banner（含注释标记版和裸 div 版）
+  html = stripAllHeroBanners(html);
 
   const heroBanner = `<!--HERO-START-->
 <div class="report-title-hero">
