@@ -72,95 +72,80 @@
     /* Star ratings → colored */
     .report-body td:last-child, .report-body td { white-space: pre-line; }
 
-    /* === Report Hero Banner — Sci-Fi === */
+    /* === Report Hero Banner — Photo Sci-Fi === */
     .report-title-hero {
-      text-align: center; padding: 52px 24px 44px;
+      height: 300px;
       margin: -36px -40px 40px;
-      background: linear-gradient(180deg, #020c1b 0%, #071528 50%, #0c1e3c 100%);
       border-radius: var(--radius) var(--radius) 0 0;
       position: relative; overflow: hidden; color: #fff;
+      background:
+        url('https://images.unsplash.com/photo-1617788138017-80ad40651399?w=1600&q=85&fit=crop&crop=center')
+        center/cover no-repeat,
+        linear-gradient(135deg, #020c1b, #0c1e3c);
+    }
+    /* Composite overlay: strong dark on left+bottom, keep right luminous */
+    .report-title-hero::before {
+      content: '';
+      position: absolute; inset: 0; z-index: 1;
+      background:
+        linear-gradient(to right,  rgba(0,5,15,.92) 0%, rgba(0,5,15,.65) 42%, rgba(0,5,15,.15) 100%),
+        linear-gradient(to top,    rgba(0,5,15,.90) 0%, rgba(0,5,15,.4)  45%, transparent 75%);
     }
     /* Top neon border */
     .report-title-hero::after {
       content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent 0%, #00e5ff 30%, #7c3aed 50%, #00e5ff 70%, transparent 100%);
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #00e5ff 0%, #3b82f6 40%, #7c3aed 60%, transparent 100%);
+      opacity: .9;
     }
     /* Scan line */
     @keyframes heroScan {
       0%   { top: -1px; opacity: 0; }
-      5%   { opacity: 0.8; }
-      95%  { opacity: 0.4; }
-      100% { top: 100%;  opacity: 0; }
+      5%   { opacity: .7; }
+      90%  { opacity: .3; }
+      100% { top: 100%; opacity: 0; }
     }
     .hero-scan {
       position: absolute; left: 0; right: 0; height: 1px; top: 0;
-      background: linear-gradient(90deg, transparent, #00e5ff 40%, #00e5ff 60%, transparent);
-      animation: heroScan 5s ease-in-out infinite;
+      background: linear-gradient(90deg, rgba(0,229,255,.8) 0%, rgba(0,229,255,.4) 50%, transparent 100%);
+      animation: heroScan 6s ease-in-out infinite;
       z-index: 3; pointer-events: none;
     }
-    /* Perspective grid */
-    .hero-grid {
-      position: absolute; bottom: 0; left: -15%; right: -15%; height: 52%;
-      background-image:
-        linear-gradient(rgba(0,229,255,0.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,229,255,0.07) 1px, transparent 1px);
-      background-size: 64px 36px;
-      transform: perspective(160px) rotateX(44deg);
-      transform-origin: bottom center;
-      pointer-events: none;
-    }
     /* HUD corner brackets */
-    .hero-corner { position: absolute; width: 18px; height: 18px; }
-    .hero-tl { top: 10px; left: 10px; border-top: 1.5px solid rgba(0,229,255,.65); border-left: 1.5px solid rgba(0,229,255,.65); }
-    .hero-tr { top: 10px; right: 10px; border-top: 1.5px solid rgba(0,229,255,.65); border-right: 1.5px solid rgba(0,229,255,.65); }
-    .hero-bl { bottom: 10px; left: 10px; border-bottom: 1.5px solid rgba(0,229,255,.65); border-left: 1.5px solid rgba(0,229,255,.65); }
-    .hero-br { bottom: 10px; right: 10px; border-bottom: 1.5px solid rgba(0,229,255,.65); border-right: 1.5px solid rgba(0,229,255,.65); }
-    /* Side lines */
-    .hero-line {
-      position: absolute; top: 0; bottom: 0; width: 1px;
-      background: linear-gradient(180deg, transparent, rgba(0,229,255,.3) 40%, rgba(0,229,255,.3) 60%, transparent);
-      pointer-events: none;
+    .hero-corner { position: absolute; width: 20px; height: 20px; z-index: 2; }
+    .hero-tl { top: 12px; left: 12px; border-top: 2px solid rgba(0,229,255,.8); border-left: 2px solid rgba(0,229,255,.8); }
+    .hero-tr { top: 12px; right: 12px; border-top: 2px solid rgba(0,229,255,.5); border-right: 2px solid rgba(0,229,255,.5); }
+    .hero-bl { bottom: 12px; left: 12px; border-bottom: 2px solid rgba(0,229,255,.8); border-left: 2px solid rgba(0,229,255,.8); }
+    .hero-br { bottom: 12px; right: 12px; border-bottom: 2px solid rgba(0,229,255,.5); border-right: 2px solid rgba(0,229,255,.5); }
+    /* Text block — bottom-left */
+    .hero-text-box {
+      position: absolute; bottom: 32px; left: 40px;
+      z-index: 2; text-align: left; max-width: 58%;
     }
-    /* Pulsing dots */
-    @keyframes heroPulse {
-      0%, 100% { opacity: .15; transform: scale(1); }
-      50%       { opacity: 1;   transform: scale(1.8); }
-    }
-    .hero-dot {
-      position: absolute; width: 4px; height: 4px; border-radius: 50%;
-      background: #00e5ff; pointer-events: none;
-    }
-    /* Badge */
-    .report-title-badge {
-      position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(0,229,255,.08); border: 1px solid rgba(0,229,255,.4);
-      color: #00e5ff; font-size: 11px; font-weight: 700;
-      padding: 4px 16px; border-radius: 2px;
-      letter-spacing: .15em; text-transform: uppercase; margin-bottom: 18px;
-      font-family: 'Courier New', monospace;
-    }
-    /* Main title */
+    /* Main title — div, not h1, avoids .report-body h1 cascade */
     .report-main-title {
-      position: relative; z-index: 1;
-      font-size: 32px !important; font-weight: 800 !important; color: #fff !important;
-      letter-spacing: .04em; margin: 0 0 14px !important;
-      text-shadow: 0 0 24px rgba(0,229,255,.5), 0 0 48px rgba(0,229,255,.2), 0 2px 16px rgba(0,0,0,.9);
-      border: none !important; padding: 0 !important;
+      font-size: 28px; font-weight: 900; color: #ffffff;
+      letter-spacing: .04em; margin: 0 0 10px; line-height: 1.3;
+      text-shadow:
+        0 0 12px rgba(0,229,255,.9),
+        0 0 32px rgba(0,229,255,.5),
+        0 2px 4px rgba(0,0,0,1),
+        0 4px 12px rgba(0,0,0,1);
     }
     .report-title-date {
-      position: relative; z-index: 1;
-      font-size: 13px; color: rgba(0,229,255,.8); margin-bottom: 22px;
+      font-size: 12px; color: rgba(0,229,255,.9); margin-bottom: 16px;
       font-family: 'Courier New', monospace; letter-spacing: .12em;
     }
     .report-title-markets {
-      position: relative; z-index: 1;
-      display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 8px;
+      display: flex; flex-wrap: wrap; gap: 5px 7px;
     }
     .report-title-markets span {
-      background: rgba(0,229,255,.06); border: 1px solid rgba(0,229,255,.22);
-      color: rgba(255,255,255,.75); padding: 3px 11px; border-radius: 2px;
-      font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: .05em;
+      background: rgba(0,0,0,.5); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.2);
+      color: rgba(255,255,255,.9);
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 500;
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
     /* Enhanced section headers */
@@ -176,8 +161,9 @@
       .report-body table { font-size: 12px; }
       .report-body th, .report-body td { padding: 7px 9px; }
       .header-brand h1 { font-size: 17px; }
-      .report-title-hero { padding: 32px 16px 28px; margin: -20px -16px 24px; }
-      .report-main-title { font-size: 22px !important; }
+      .report-title-hero { height: 200px; margin: -20px -16px 24px; }
+      .hero-text-box { left: 20px; bottom: 18px; max-width: 80%; }
+      .report-main-title { font-size: 18px !important; }
     }
     @media print {
       .site-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -205,21 +191,17 @@
   <main class="main-wrap">
     <article class="report-body">
       <div class="report-title-hero">
-  <div class="report-hero-car"><svg width="220" height="68" viewBox="0 0 220 68" xmlns="http://www.w3.org/2000/svg" style="opacity:0.28;display:block;margin:0 auto">
-    <path d="M18,52 L18,42 L34,32 L62,22 L158,22 L186,32 L202,42 L202,52" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M60,22 L72,10 L148,10 L160,22" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-    <circle cx="60" cy="54" r="11" fill="none" stroke="white" stroke-width="2"/>
-    <circle cx="60" cy="54" r="4" fill="rgba(255,255,255,0.35)"/>
-    <circle cx="158" cy="54" r="11" fill="none" stroke="white" stroke-width="2"/>
-    <circle cx="158" cy="54" r="4" fill="rgba(255,255,255,0.35)"/>
-    <path d="M20,52 L48,52 M72,52 L146,52 M170,52 L200,52" stroke="white" stroke-width="2" stroke-linecap="round"/>
-    <line x1="0" y1="64" x2="220" y2="64" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
-  </svg></div>
-  <div class="report-title-badge">📊 每日更新报告</div>
-  <h1 class="report-main-title">汽车配件销售参考日报</h1>
-  <div class="report-title-date">📅 2026-03-15</div>
-  <div class="report-title-markets">
-    <span>🇺🇸 美国</span><span>🇪🇺 欧洲</span><span>🌍 中东</span><span>🇲🇽 墨西哥</span><span>🇯🇵 日本</span><span>🇦🇺 澳新</span>
+  <div class="hero-scan"></div>
+  <div class="hero-corner hero-tl"></div>
+  <div class="hero-corner hero-tr"></div>
+  <div class="hero-corner hero-bl"></div>
+  <div class="hero-corner hero-br"></div>
+  <div class="hero-text-box">
+    <div class="report-main-title">全球车型销售趋势与车配动态</div>
+    <div class="report-title-date">[ 2026-03-15 ]</div>
+    <div class="report-title-markets">
+      <span>🇺🇸 美国</span><span>🇪🇺 欧洲</span><span>🌍 中东</span><span>🇲🇽 墨西哥</span><span>🇯🇵 日本</span><span>🇦🇺 澳新</span>
+    </div>
   </div>
 </div>
 <h4>一、Tesla &amp; 新能源车动态</h4>
@@ -551,7 +533,7 @@
 
   <footer class="site-footer">
     <p>本报告由 Claude AI 自动生成 · 数据来源于公开信息 · 仅供参考</p>
-    <p>生成时间: 2026/3/15 16:34:00</p>
+    <p>生成时间: 2026/3/15 16:54:22</p>
   </footer>
 
   <script>
