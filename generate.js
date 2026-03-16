@@ -11,10 +11,14 @@ const { marked } = require('marked');
 // ── 路径配置 ──────────────────────────────────────────────
 const REPORTS_DIR  = path.join(__dirname, 'reports');
 const INDEX_FILE   = path.join(__dirname, 'index.html');
-const PROMPT_FILE  = path.join(
-  process.env.USERPROFILE || process.env.HOME || '',
-  '.claude', 'commands', 'car-daily.md'
-);
+// 优先使用仓库内的 prompts/car-daily.md（GitHub Actions 兼容）
+// 回退到本地 ~/.claude/commands/car-daily.md（本地开发兼容）
+const PROMPT_FILE = fs.existsSync(path.join(__dirname, 'prompts', 'car-daily.md'))
+  ? path.join(__dirname, 'prompts', 'car-daily.md')
+  : path.join(
+      process.env.USERPROFILE || process.env.HOME || '',
+      '.claude', 'commands', 'car-daily.md'
+    );
 
 // ── 初始化 ────────────────────────────────────────────────
 fs.mkdirSync(REPORTS_DIR, { recursive: true });
