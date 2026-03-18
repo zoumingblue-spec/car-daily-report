@@ -82,7 +82,7 @@ function runClaude(input) {
   return new Promise((resolve, reject) => {
     const child = spawn(
       'claude',
-      ['--print', '--output-format', 'text', '--allowedTools', 'WebSearch,WebFetch'],
+      ['--print', '--output-format', 'text', '--allowedTools', 'WebSearch,WebFetch', '--dangerously-skip-permissions'],
       { env: childEnv, stdio: ['pipe', 'pipe', 'pipe'] }
     );
 
@@ -94,7 +94,7 @@ function runClaude(input) {
     child.on('close', code => {
       console.log('\n');
       if (code === 0) resolve(stdout);
-      else reject(new Error(`claude 退出码 ${code}:\n${stderr}`));
+      else reject(new Error(`claude 退出码 ${code}:\nSTDERR: ${stderr}\nSTDOUT: ${stdout}`));
     });
     child.on('error', err => reject(new Error(`无法启动 claude: ${err.message}`)));
 
