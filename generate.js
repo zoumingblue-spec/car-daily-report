@@ -82,27 +82,52 @@ function runClaude(input) {
   return new Promise((resolve, reject) => {
     const child = spawn(
       'claude',
-      ['--print', '--output-format', 'text', '--allowedTools', 'WebSearch,WebFetch', '--dangerously-skip-permissions'],
+      ['--print', '--output-format', 'stream-json', '--allowedTools', 'WebSearch,WebFetch', '--dangerously-skip-permissions'],
       { env: childEnv, stdio: ['pipe', 'pipe', 'pipe'] }
     );
 
-    let stdout = '';
+    let lineBuffer = '';
+    const allTextChunks = [];
     let stderr = '';
-    child.stdout.on('data', d => { stdout += d; process.stdout.write('.'); });
+
+    child.stdout.on('data', chunk => {
+      lineBuffer += chunk.toString();
+      process.stdout.write('.');
+      let newlineIdx;
+      while ((newlineIdx = lineBuffer.indexOf('\n')) !== -1) {
+        const line = lineBuffer.slice(0, newlineIdx).trim();
+        lineBuffer = lineBuffer.slice(newlineIdx + 1);
+        if (!line) continue;
+        try {
+          const event = JSON.parse(line);
+          // 收集所有轮次的 assistant 文字（新版 CLI 多轮输出场景）
+          if (event.type === 'assistant' && Array.isArray(event.message?.content)) {
+            for (const block of event.message.content) {
+              if (block.type === 'text' && block.text) {
+                allTextChunks.push(block.text);
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    });
+
     child.stderr.on('data', d => { stderr += d; });
 
     child.on('close', code => {
       console.log('\n');
-      if (code === 0) resolve(stdout);
-      else reject(new Error(`claude 退出码 ${code}:\nSTDERR: ${stderr}\nSTDOUT: ${stdout}`));
+      const collected = allTextChunks.join('\n').trim();
+      if (code === 0) {
+        resolve(collected);
+      } else {
+        reject(new Error(`claude 退出码 ${code}:\nSTDERR: ${stderr}\nCOLLECTED: ${collected}`));
+      }
     });
     child.on('error', err => reject(new Error(`无法启动 claude: ${err.message}`)));
 
-    // 写入 prompt 后立即关闭 stdin，避免管道阻塞
     child.stdin.write(input, 'utf-8');
     child.stdin.end();
 
-    // 15 分钟硬超时
     const timer = setTimeout(() => {
       child.kill();
       reject(new Error('超时：claude 运行超过 15 分钟'));
