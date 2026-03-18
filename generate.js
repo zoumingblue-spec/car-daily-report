@@ -82,7 +82,7 @@ function runClaude(input) {
   return new Promise((resolve, reject) => {
     const child = spawn(
       'claude',
-      ['--print', '--output-format', 'stream-json', '--allowedTools', 'WebSearch,WebFetch', '--dangerously-skip-permissions'],
+      ['--print', '--output-format', 'stream-json', '--verbose', '--allowedTools', 'WebSearch,WebFetch', '--dangerously-skip-permissions'],
       { env: childEnv, stdio: ['pipe', 'pipe', 'pipe'] }
     );
 
