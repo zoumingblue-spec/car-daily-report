@@ -87,7 +87,8 @@ function runClaude(input) {
     );
 
     let lineBuffer = '';
-    const allTextChunks = [];
+    let resultText = '';
+    let lastAssistantText = '';
     let stderr = '';
 
     child.stdout.on('data', chunk => {
@@ -100,13 +101,17 @@ function runClaude(input) {
         if (!line) continue;
         try {
           const event = JSON.parse(line);
-          // 收集所有轮次的 assistant 文字（新版 CLI 多轮输出场景）
+          // 优先取 result 事件（最终完整输出）
+          if (event.type === 'result' && event.result) {
+            resultText = event.result;
+          }
+          // 备用：记录最后一条 assistant 文字
           if (event.type === 'assistant' && Array.isArray(event.message?.content)) {
-            for (const block of event.message.content) {
-              if (block.type === 'text' && block.text) {
-                allTextChunks.push(block.text);
-              }
-            }
+            const texts = event.message.content
+              .filter(b => b.type === 'text' && b.text)
+              .map(b => b.text)
+              .join('');
+            if (texts) lastAssistantText = texts;
           }
         } catch (_) {}
       }
@@ -116,7 +121,7 @@ function runClaude(input) {
 
     child.on('close', code => {
       console.log('\n');
-      const collected = allTextChunks.join('\n').trim();
+      const collected = (resultText || lastAssistantText).trim();
       if (code === 0) {
         resolve(collected);
       } else {
